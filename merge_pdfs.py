@@ -773,16 +773,19 @@ def extract_patient_data():
         messagebox.showwarning("Input Folder Not Selected", "Input folder not selected.")
 
 def check_pdf_files():
+    # Asking for the I/P Directory ( files that need to be checked with the excel.)
     pdf_folder_path = filedialog.askdirectory(title="Select Merged PDF Folder", mustexist=True)
     if not pdf_folder_path:
         print("Merged PDF folder not selected.")
         return
 
+    # Asking for the excel directory (the excel which is used for comparison.)
     excel_file_path = filedialog.askopenfilename(title="Select Excel Sheet", filetypes=[("Excel Files", "*.xlsx;*.xls")])
     if not excel_file_path:
         print("Excel sheet not selected.")
         return
 
+    # Asking for the O/P Directory (here the compared excel will come.)
     output_directory = filedialog.askdirectory(title="Select Output Directory")
     if not output_directory:
         print("Output directory not selected.")
@@ -837,7 +840,9 @@ def check_pdf_files():
                 elif cell.value == "No":
                     cell.fill = PatternFill(start_color="FF0000", end_color="FF0000",
                                             fill_type="solid")  # Red color
+                    
 
+        # To check whether pdf files are there or not.
         if pdf_files:
             pdf_file = pdf_files[0]
             pdf_path = os.path.join(pdf_folder_path, pdf_file)
@@ -845,13 +850,14 @@ def check_pdf_files():
             # Extract patient data from the Excel row
             patient_data_excel = {
                 "patient_id": str(excel_row["patient_id"]).lower().strip(),
-                "patient_name": str(excel_row["patient_name"]).split(" ")[0].lower().strip(),
+                "patient_name": str(excel_row["patient_name"]).lower().strip(),
                 "age": str(excel_row.get("age", "")).strip(),
                 "gender": str(excel_row["gender"]).strip().lower(),
                 "date": str(excel_row["date"]).split(" ")[0]
             }
             print(patient_data_excel)
 
+            # Main Logic for comparison.
             try:
                 for modality in ["ECG_GRAPH/ECG_REPORT", "XRAY_REPORT", "XRAY_IMAGE", "PFT", "AUDIOMETRY","OPTOMETRY", "VITALS"]:
                     modality_match = False
@@ -875,19 +881,34 @@ def check_pdf_files():
                         page_text = page.extract_text()
 
                         missing_modalities = []
+                        print("this is the start of page text.")
+                        print("Page no. ", page_num)
+                        print(page_text)
+                        print("This is the end of page text.")
 
+                        # Checking the ECG details.
+                        print("Checking if ecg is there or not.")
                         try:
+                            print("Inside the try block of ecg.")
                             if modality == "ECG_GRAPH/ECG_REPORT" and "ECG" in page_text:
-                                patient_name = str(page_text).split("Name:")[1].split("Patient")[0]
-                                if patient_name.count(" ") == 1:
-                                    patient_name = patient_name.strip().lower()
-                                else:
-                                    patient_name = patient_name.split(" ")[1].lower().strip()
+                                print("confirmed that it is a ecg file.")
+                                patient_name = str(page_text).split("Name:")[1].split("Patient ID:")[0].strip().lower()
+                                # if patient_name.count(" ") == 1:
+                                #     patient_name = patient_name.strip().lower()
+                                # else:
+                                #     patient_name = patient_name.split(" ")[1].lower().strip()
 
                                 patient_id = str(page_text).split("Patient ID:")[1].split("Age")[0].strip().lower()
                                 age = str(page_text).split("Age:")[1].split("Gender")[0].strip()
                                 gender = str(page_text).split("Gender:")[1].split("Test")[0].strip().lower()
-                                report_date = str(page_text).split("Test date:")[1].split("Report date:")[0].strip().lower()
+                                report_date = str(page_text).split("Report date:")[1].split("ECG")[0].strip().lower()
+                                print("Printing the details of ECG :")
+                                print("Patient Id", patient_id)
+                                print("Patient Name", patient_name)
+                                print("Age", age)
+                                print("Gender", gender)
+                                print("Report Date", report_date)
+
 
                                 print("ECG REPORT/ECG GRAPH", patient_id, patient_name, age, gender, report_date)
 
@@ -905,46 +926,56 @@ def check_pdf_files():
                             print(f"IndexError: {str(ie)}. Skipping page processing.")
                             continue
 
-                        try:
-                            if modality == "XRAY_REPORT" and "Study Date" and "Report Date" in page_text:
-                                patient_id = str(page_text).split("Patient ID")[1].split(" ")[1].lower().strip()
-                                patient = str(page_text).split("Name")[1].split("Date")[0].split(" ")[0].strip().lower()
-                                if "patient" in patient:
-                                    patient_name = patient.split("patient")[0].strip()
-                                else:
-                                    patient_name = patient
-                                age = str(page_text).split("Age")[1].split("Yr")[0].strip()
-                                gender = str(page_text).split("Sex")[1].split("Study Date")[0].strip().lower()
-                                date = str(page_text).split("Study Date")[1].split("\n")[1].split("Time")[1].strip()
-                                input_date = datetime.strptime(date, "%d %b %Y")
-                                report_date = input_date.strftime("%Y-%m-%d")
+                        # Checking if X-RAY file is present (for stradus.)
+                        # print("Now checking the details of xray files if present.")
+                        # try:
+                        #     print("Inside the try block of xray.")
+                        #     if modality == "XRAY_REPORT" and "Study Date" and "Report Date" in page_text:
+                        #         print("It is confirmed that it is a xray file.")
+                        #         patient_id = str(page_text).split("Patient ID")[1].split(" ")[1].lower().strip()
+                        #         patient = str(page_text).split("Name")[1].split("Date")[0].split(" ")[0].strip().lower()
+                        #         if "patient" in patient:
+                        #             patient_name = patient.split("patient")[0].strip()
+                        #         else:
+                        #             patient_name = patient
+                        #         age = str(page_text).split("Age")[1].split("Yr")[0].strip()
+                        #         gender = str(page_text).split("Sex")[1].split("Study Date")[0].strip().lower()
+                        #         date = str(page_text).split("Study Date")[1].split("\n")[1].split("Time")[1].strip()
+                        #         input_date = datetime.strptime(date, "%d %b %Y")
+                        #         report_date = input_date.strftime("%Y-%m-%d")
 
-                                print('XRAY', patient_id, patient_name, age, report_date)
+                        #         print("These are the extracted data of the xray.")
+                        #         print('XRAY', patient_id, patient_name, age, report_date)
+                        #         print("This is the date extracted :", date)
+                        #         print("This is the i/p date :", input_date)
 
-                                # Compare with Excel data
-                                if (patient_id == patient_data_excel["patient_id"] and
-                                        patient_name == patient_data_excel["patient_name"] and
-                                        age == patient_data_excel["age"] and
-                                        gender == patient_data_excel["gender"] and
-                                        report_date == patient_data_excel["date"]):
-                                    modality_match = True
-                                    break
+                        #         # Compare with Excel data
+                        #         if (patient_id == patient_data_excel["patient_id"] and
+                        #                 patient_name == patient_data_excel["patient_name"] and
+                        #                 age == patient_data_excel["age"] and
+                        #                 gender == patient_data_excel["gender"] and
+                        #                 report_date == patient_data_excel["date"]):
+                        #             modality_match = True
+                        #             break
                                  
-                        except IndexError as ie:
-                            print(f"IndexError: {str(ie)}. Skipping page processing.")
-                            continue
+                        # except IndexError as ie:
+                        #     print(f"IndexError: {str(ie)}. Skipping page processing.")
+                        #     continue
 
-                        try:
-                            if modality == "XRAY_IMAGE" and "Page 2 of 2" in page_text:
-                                if "Page 2 of 2" in page_text:
-                                    modality_match = True
-                                    break
-                        except IndexError as ie:
-                            print(f"IndexError: {str(ie)}. Skipping page processing.")
-                            continue
+                        # try:
+                        #     if modality == "XRAY_IMAGE" and "Page 2 of 2" in page_text:
+                        #         if "Page 2 of 2" in page_text:
+                        #             modality_match = True
+                        #             break
+                        # except IndexError as ie:
+                        #     print(f"IndexError: {str(ie)}. Skipping page processing.")
+                        #     continue
 
+                        # checking for pft.
                         try:
+                            print("inside the try block of pft.")
                             if modality == "PFT" and "RECORDERS & MEDICARE SYSTEMS" in page_text:
+                                print("it confirms that it is a pft file.")
                                 patient_name = str(page_text).split("Patient: ")[1].split("Refd.By:")[0].split("\n")[0].lower()
                                 if " " in patient_name:
                                     patient_name = patient_name.split(" ")[0]
@@ -980,14 +1011,18 @@ def check_pdf_files():
                             print(f"IndexError: {str(ie)}. Skipping page processing.")
                             continue
 
+                        # checking for audio.
                         try:
+                            print("inside the try block of audiometry.")
                             if modality == "AUDIOMETRY" and "left ear" in page_text:
+                                print("it is confirmation that this is a audiometry file.")
                                 data = str(page_text)
-                                patient_name = str(page_text).split("Name")[1].split("Patient ID")[0].strip().split(" ")[0].lower()
+                                patient_name = str(page_text).split("Name")[1].split("Patient ID")[0].strip().lower()
                                 patient_id = str(page_text).split("Patient ID")[1].split("Age")[0].strip().lower()
                                 age = str(page_text).split("Age")[1].split("Gender")[0].strip()
+                                
                                 gender = str(page_text).split("Gender")[1].split("Test")[0].strip().lower()
-                                report_date = str(page_text).split('Test date')[1].split('Report date')[0].strip().lower()
+                                report_date = str(page_text).split('Report date')[1].strip().lower()
 
                                 print('AUDIOMETRY', patient_id, patient_name, age, gender, report_date)
 
@@ -1004,13 +1039,24 @@ def check_pdf_files():
                             print(f"IndexError: {str(ie)}. Skipping page processing.")
                             continue
 
+                        # Checking for opto.
                         try:
-                            if modality == "OPTOMETRY" and "OPTOMETRY" in page_text:
-                                patient_name = str(page_text).split("Name:")[1].split("Patient ID:")[0].split(" ")[1].strip().lower()
-                                patient_id = str(page_text).split("Patient ID:")[1].split("Age")[0].strip().lower()
+                            print("Inside the try block of optometry.")
+                            if modality == "OPTOMETRY" and "OPTOMETRY REPORT" in page_text:
+                                print("This is confirmed that this is a opto file.")
+                                patient_name = str(page_text).split("Name:")[1].split("Age:")[0].strip().lower()
+                                patient_id = str(page_text).split("Patient ID:")[1].split("Patient Name:")[0].strip().lower()
                                 age = str(page_text).split("Age:")[1].split("Gender")[0].strip()
                                 gender = str(page_text).split("Gender:")[1].split("Test")[0].strip().lower()
-                                report_date = str(page_text).split("Test date:")[1].split("Report date:")[0].strip().lower()
+                                report_date = str(page_text).split("Report Date:")[1].split("OPTOMETRY")[0].strip().lower()
+
+                                print("These are the opto patient details :")
+                                print("Patient Id", patient_id)
+                                print("Patient Name", patient_name)
+                                print("Age", age)
+                                print("Gender", gender)
+                                print("Report Date", report_date)
+                                
 
                                 print('OPTOMETRY', patient_id, patient_name, age, gender, report_date)
 
@@ -1027,20 +1073,23 @@ def check_pdf_files():
                                             patient_name != patient_data_excel["patient_name"] and
                                             age != patient_data_excel["age"] and
                                             gender != patient_data_excel["gender"] and
-                                            report_date != patinet_data_excel["date"]):
+                                            report_date != patient_data_excel["date"]):
                                         problem_list.append(f' {modality}: All the data are incorrect')
 
                         except IndexError as ie:
                             print(f"IndexError: {str(ie)}. Skipping page processing.")
                             continue
 
+                        # Checking for vitals.
                         try:
+                            print("inside the try block of vitals.")
                             if modality == "VITALS" and "VIT" in page_text:
-                                patient_name = str(page_text).split("Name:")[1].split("Patient ID:")[0].split(" ")[1].strip().lower()
-                                patient_id = str(page_text).split("Patient ID:")[1].split("Age")[0].strip().lower()
+                                print("it confirms that it is a vitals file.")
+                                patient_id = str(page_text).split("Patient ID:")[1].split("Patient Name:")[0].strip().lower()
+                                patient_name = str(page_text).split("Patient Name:")[1].split("Age")[0].strip().lower()
                                 age = str(page_text).split("Age:")[1].split("Gender")[0].strip()
                                 gender = str(page_text).split("Gender:")[1].split("Test")[0].strip().lower()
-                                report_date = str(page_text).split("Test date:")[1].split("Report date:")[0].strip().lower()
+                                report_date = str(page_text).split("Report Date:")[1].split("VITALS")[0].strip().lower()
                                 print('VITALS', patient_id, patient_name, age, gender, report_date)
 
                                 # Compare with Excel data
@@ -1063,13 +1112,18 @@ def check_pdf_files():
                             print(f"IndexError: {str(ie)}. Skipping page processing.")
                             continue
 
+                        # Checking for X-Ray (Reporting Bot.)
                         try:
+                            print("inside the try block of xray.")
                             if modality == "XRAY_REPORT" and "X-RAY" in page_text:
+                                print("it confirms that it is a xray file.")
                                 patient_id = str(page_text).split("Patient ID:")[1].split("Age:")[0].lower().strip()
                                 patient_name = str(page_text).split("Name:")[1].split("Patient ID:")[0].strip().lower()
                                 age = str(page_text).split("Age:")[1].split("YGender:")[0].strip()
+                                if age.startswith("0"):
+                                    age = age.split("0")[1]
                                 gender = str(page_text).split("Gender:")[1].split("Test date:")[0].strip().lower()
-                                report_date = str(page_text).split("Report date:")[1].split("X-RAY")[0].strip()
+                                report_date = str(page_text).split("Report date:")[1].split("X-RAY")[0].strip().lower()
 
                                 print('XRAY BOT', patient_id, patient_name, age, gender, report_date)
 
@@ -1223,6 +1277,10 @@ def split_patient_file():
         print("Input directory not selected.")
 
 
+def check_ecg_files():
+    # o/p = "Here i will write logic to check the ecg files."
+    print(f"Here i will write the logic to check the ecg files.")
+
 # def dcm_to_pdf_converter():
 #     input_directory = filedialog.askdirectory(title="Select Input Directory")
 #
@@ -1258,6 +1316,10 @@ window.geometry("1000x500+200-100")
 redcliffe_label = tk.Label(window, text="Merge Pdf Files", font=("Arial", 16, "bold"))
 redcliffe_label.place(x=580, y=10, anchor='ne')
 
+# Adding the label of Merge All files button .
+merge_all_files = tk.Label(window, text="Merge All PDF Files", font=("Arial", 16, "bold"))
+merge_all_files.place(x=600, y=130, anchor='ne')
+
 merge_redcliffe_button1 = tk.Button(window, bg='blue', fg='white', activebackground='darkblue', activeforeground='white', padx=30, pady=10, relief='raised', text="Merge PDF Files", command=merge_redcliffe_pdf_files, font=("Arial", 12, "bold"))
 merge_redcliffe_button2 = tk.Button(window, bg='magenta', fg='black', activebackground='gold', activeforeground='black', padx=30, pady=10, relief='raised', text="Merge All PDF Files", command=merge_all, font=("Arial", 12, "bold"))
 merge_redcliffe_button1.place(x=600, y=58, anchor='ne')
@@ -1286,6 +1348,12 @@ check_pdf_File.place(x=903, y=130, anchor='ne')
 
 check_pdf_button = tk.Button(window, bg='yellow',fg='black', activebackground='darkblue', activeforeground='white',padx=30, pady=10, relief='raised', text="Split Pdf Files", command=split_patient_file, font=("Arial", 12, "bold"))
 check_pdf_button.place(x=940, y=175, anchor='ne')
+
+check_ecg_files_label = tk.Label(window, text="Check ECG Files", font=("Arial", 16, "bold"))
+check_ecg_files_label.place(x = 580, y=250, anchor='ne')
+
+check_ecg_files_button = tk.Button(window, bg='red',fg='black', activebackground='darkred', activeforeground='white',padx=30, pady=10, relief='raised', text="Check ECG Files", command=check_ecg_files, font=("Arial", 12, "bold"))
+check_ecg_files_button.place(x=605, y=310, anchor='ne')
 
 
 # dcm_to_pdf = tk.Label(window, text="Reports Observation", font=("Arial", 16, "bold"))
