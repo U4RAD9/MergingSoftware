@@ -1241,17 +1241,59 @@ def split_patient_file():
                                 # Extract text data from the page to determine the modality
                                 page_text = pdf_reader.pages[page_number].extract_text()
                                 modality = None
+                                images = []
+                                is_ecg = False
+                                count = 0
 
-                                if "Study Date" and "Report Date" in page_text:
-                                    modality = 'XRAY_REPORT'
+                                # Adding logs so that i can identify the page. - himanshu.
+                                print("Page text is below")
+                                print(page_text)
+                                print("End of page text.")
+
+                                if "SMART REPORT" in page_text:
+                                    print("This is a smart report.")
+                                    modality = "Smart_Report"
+                                elif "X-RAY" in page_text:
+                                    print("This is a xray file.")
+                                    modality = 'Xray_Report'
                                 elif "RECORDERS & MEDICARE SYSTEMS" in page_text:
+                                    print("This is a pft file.")
                                     modality = 'PFT'
                                 elif "Page 2 of 2" in page_text:
-                                    modality = 'XRAY IMAGE'
+                                    print("This is an xray image.")
+                                    modality = 'Xray_Image'
                                 elif "OPTOMETRY" in page_text:
-                                    modality = 'OPTOMETRY'
+                                    print("This is a optometry file.")
+                                    modality = 'Optometry'
+                                elif "left ear" in page_text:
+                                    print("This is a audiometry file.")
+                                    modality = 'Audiometry'
+                                elif "ECG" in page_text:
+                                    print("This is an ECG file.")
+                                    modality = 'ECG'
+                                elif is_ecg == True and count == 1:
+                                    print("This is another others image.")
+                                    modality = 'Other2'
+                                    count += 1
+                                elif is_ecg == True and count == 2:
+                                    print("This is the 3rd others file.")
+                                    modality = 'Others3'
+                                elif page_text == '':
+                                    print("This is a others image.")
+                                    modality = 'Others'
+                                    is_ecg = True
+                                    count += 1
+                                elif "VITALS" in page_text:
+                                    print("This is a vitals file.")
+                                    modality = 'Vitals'
+                                elif "RBC Count" in page_text:
+                                    print("This is a blood Report.")
+                                    modality = 'BloodReport'
                                 else:
-                                    modality = 'AUDIOMETRY'
+                                    print("This is a dr. consultation  file.")
+                                    modality = 'Dr.Consultation'
+
+                                # I have to add a proper logic to separate the images separately.
 
                                 if modality:
                                     output_file_path = patient_dir / f'{patient_id}_{modality}.pdf'
