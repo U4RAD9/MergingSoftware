@@ -28,7 +28,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='merge_pdfs',
+    name='HimanshuMergingSoftware',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

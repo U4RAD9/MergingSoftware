@@ -65,7 +65,7 @@ def merge_redcliffe_pdf_files():
                     print(str_pdf_file)
                     split_str_pdf_files = str_pdf_file.split("_")[1].lower()
                     print("This is the splitted str :", split_str_pdf_files)
-                    splitted_file = str_pdf_file.rsplit("\\",1)[1]
+                    splitted_file = str_pdf_file.rsplit("\\",1)[1].lower()
                     print("This is the splitted file :", splitted_file)
                     try:
                         print("Inside the try block.")
