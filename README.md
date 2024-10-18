@@ -5,8 +5,8 @@ I've fixed the following things as of 23rd September 2024 :
 3. Fixed the splitting logic , added both the dr.consultation file and the smart report.
 4. Now , I have to add the logic which checks the formatting issue in ecg files and then they upload it to bot.
 
-# To run the merging software i have to use : py merge_pdfs.py
-# To create the .exe i have to simply run : pyinstaller merge_pdfs.spec
+* To run the merging software i have to use : py merge_pdfs.py
+* To create the .exe i have to simply run : pyinstaller merge_pdfs.spec
 
 
 -- Himanshu Jangid.
