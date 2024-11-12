@@ -54,6 +54,8 @@ def merge_redcliffe_pdf_files():
                 others = None
                 blood_report = None
                 smart_report = None
+                # Adding this too (Himanshu/12nov24)
+                vaccination_report = None
                 pdf_files_3_or_less = False
                 total_pdfs_less_than_3 = 0
 
@@ -119,6 +121,9 @@ def merge_redcliffe_pdf_files():
                             elif 'SMART REPORT' in first_page_text:
                                 smart_report = file
                                 print("This is a smart report.")
+                            elif 'CERTIFICATE OF VACCINATION' in first_page_text:
+                                vaccination_report = file
+                                print("This is a vaccination file.")
                             else:
                                 others = file
                                 print("This is an others file.")
@@ -154,6 +159,8 @@ def merge_redcliffe_pdf_files():
                         merger.append(xray)
                     if blood_report:
                         merger.append(blood_report)
+                    if vaccination_report:
+                        merger.append(vaccination_report)
                     if others:
                         merger.append(others)
 
@@ -169,6 +176,7 @@ def merge_redcliffe_pdf_files():
                         pft.stem.split(".")[0].lower() if pft else
                         audiometry.stem.split(".")[0].lower() if audiometry else
                         vitals.stem.split(".")[0].lower() if vitals else
+                        vaccination_report.stem.split(".")[0].lower() if vaccination_report else
                         others.stem.split(".")[0].lower() if others else
                         "default_name"
                     )

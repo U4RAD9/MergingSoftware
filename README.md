@@ -11,6 +11,7 @@ I've fixed the following things as of 23rd September 2024 :
 18 Oct 24:
 1. I faced an issue where the key was not matching in the individual patient report merging logic,so i've matched it by converting in lowercase.
 
-
+12 Nov 24:
+1. Operations team needed a new requirement, for adding the vaccination report too, so added that code in the original code.
 
 -- Himanshu Jangid.

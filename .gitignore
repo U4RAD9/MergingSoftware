@@ -2,5 +2,5 @@
 /shelf/
 /workspace.xml
 dist/merge_pdfs.exe
-dist/HimanshuMergingSoftware.exe
+# dist/HimanshuMergingSoftware.exe
 merge_pdfs.exe
