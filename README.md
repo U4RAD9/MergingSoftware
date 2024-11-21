@@ -14,4 +14,6 @@ I've fixed the following things as of 23rd September 2024 :
 12 Nov 24:
 1. Operations team needed a new requirement, for adding the vaccination report too, so added that code in the original code.
 
+21 Nov 24 :
+1. There was one issue in the check pdf files functionality , the age extracted from the excel from which we need to compare was coming as float, so fixed it to get it as integer and then pass it as string.s
 -- Himanshu Jangid.

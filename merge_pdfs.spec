@@ -28,7 +28,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='HimanshuMergingSoftware(V2)',
+    name='HimanshuMergingSoftware(V3)',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

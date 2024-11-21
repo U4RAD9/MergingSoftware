@@ -825,11 +825,20 @@ def check_pdf_files():
             problem_list.append("Pdf file is missing")
             modality_match_list = ["No"] * 7
 
+            # Fixing the age coming as float here. - Himanshu (21 Nov 24)
+            age_value = str(excel_row.get("age", "")).strip()
+            if age_value:
+                try:
+                    # Converting age to integer to remove any decimal places (e.g., 25.0 -> 25)
+                    age_value = str(int(float(age_value)))
+                except ValueError:
+                    pass  # If it's not a valid number, leaving it, as it is.
+
             # Write the results to the worksheet
             row_data = [
                            str(excel_row["patient_id"]).lower(),
                            str(excel_row["patient_name"]).split(" ")[0].lower(),
-                           str(excel_row.get("age", "")).strip(),
+                           age_value,
                            str(excel_row["gender"]).strip(),
                            str(excel_row["date"]).strip(),
                        ] + modality_match_list + [', '.join(problem_list)]
@@ -855,11 +864,20 @@ def check_pdf_files():
             pdf_file = pdf_files[0]
             pdf_path = os.path.join(pdf_folder_path, pdf_file)
 
+            # Fixing the age coming as float here. - Himanshu (21 Nov 24)
+            age_value = str(excel_row.get("age", "")).strip()
+            if age_value:
+                try:
+                    # Converting age to integer to remove any decimal places (e.g., 25.0 -> 25)
+                    age_value = str(int(float(age_value)))
+                except ValueError:
+                    pass  # If it's not a valid number, leaving it, as it is.
+
             # Extract patient data from the Excel row
             patient_data_excel = {
                 "patient_id": str(excel_row["patient_id"]).lower().strip(),
                 "patient_name": str(excel_row["patient_name"]).lower().strip(),
-                "age": str(excel_row.get("age", "")).strip(),
+                "age": age_value,
                 "gender": str(excel_row["gender"]).strip().lower(),
                 "date": str(excel_row["date"]).split(" ")[0]
             }
