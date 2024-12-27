@@ -398,9 +398,22 @@ def rename_pdf_files():
                             try:
                                 # Condition for renaming the blood report - Himanshu.
                                 if "RBC Count" in first_page_text:
-                                    complete_patient_name = str(first_page_text).split("Patient Name : ")[1].split("DOB/")[0].strip()
-                                    patient_id = complete_patient_name.rsplit(" ",1)[1]
-                                    patient_name = complete_patient_name.rsplit(" ",1)[0].split(" ",1)[1].lower()
+                                    if "Patient Name :" in first_page_text:
+                                        complete_patient_name = str(first_page_text).split("Patient Name : ")[1].split("DOB/")[0].strip()
+                                        patient_id = complete_patient_name.rsplit(" ",1)[1]
+                                        patient_name = complete_patient_name.rsplit(" ",1)[0].split(" ",1)[1].lower()
+                                    elif "Patient NAME :" in first_page_text:
+                                        complete_patient_name = str(first_page_text).split("Patient NAME : ")[1].split("DOB/")[0].strip()
+                                        patient_id = complete_patient_name.rsplit("_",1)[1]
+                                        patient_name = complete_patient_name.rsplit("_",1)[0].split(" ",1)[1].lower()
+                                    elif "PATIENT NAME :" in first_page_text:
+                                        complete_patient_name = str(first_page_text).split("PATIENT NAME : ")[1].split("DOB/")[0].strip()
+                                        patient_id = complete_patient_name.rsplit("_",1)[1]
+                                        patient_name = complete_patient_name.rsplit("_",1)[0].split(" ",1)[1].lower()
+                                    elif "PATIENT Name :" in first_page_text:
+                                        complete_patient_name = str(first_page_text).split("PATIENT Name : ")[1].split("DOB/")[0].strip()
+                                        patient_id = complete_patient_name.rsplit("_",1)[1]
+                                        patient_name = complete_patient_name.rsplit("_",1)[0].split(" ",1)[1].lower()
                                     print("This is the complete Patient Name extracted : ", complete_patient_name)
                                     print("This is the Patient Id : ", patient_id)
                                     print("This is the extracted Patient Name: ", patient_name)

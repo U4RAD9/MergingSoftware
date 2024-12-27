@@ -4,3 +4,5 @@
 dist/merge_pdfs.exe
 # dist/HimanshuMergingSoftware.exe
 merge_pdfs.exe
+build/merge_pdfs/HimanshuMergingSoftware(V4).pkg
+dist/HimanshuMergingSoftware(V4).exe
