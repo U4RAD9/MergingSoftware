@@ -24,7 +24,178 @@ from datetime import datetime
 import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning, module="PyPDF2._cmap")
+# This is the non working code that is still not completed , which needs a lot of additional work to be done on it.
+# def merge_redcliffe_pdf_files():
+#     input_directory = filedialog.askdirectory(title="Select Input Directory")
 
+#     if input_directory:
+#         output_directory = filedialog.askdirectory(title="Select Output Directory")
+
+#         if output_directory:
+#             pdf_dir = Path(input_directory)
+#             pdf_output_dir = Path(output_directory)
+#             merged_files_dir = pdf_output_dir / "Merged Files"
+#             merged_files_dir.mkdir(parents=True, exist_ok=True)
+
+#             pdf_files = list(pdf_dir.glob("*.pdf"))
+#             print("These are the pdf files list :", pdf_files)
+
+#             naming_errors = {}
+#             exception_files = {}
+#             processed_ids = set()
+#             keys = set()
+#             merged_count = 0
+
+#             for file in pdf_files:
+#                 try:
+#                     file_id = str(file).split("\\")[-1].split("_")[0].lower()
+#                     keys.add(file_id)
+#                 except IndexError:
+#                     original_filename = str(file).split("\\")[-1]
+#                     naming_errors[str(file)] = original_filename
+#                     keys.add(file_id)
+#                     print(f"File {file} has incorrect naming format. Storing naming error: {original_filename}")
+
+#             for key in keys:
+#                 if key in processed_ids:
+#                     print(f"Skipping all files with ID: {key} due to already processed.")
+#                     continue
+
+#                 xray, optometry, ecg_report, pft, audiometry, vitals, blood_report, smart_report, vaccination_report = [None] * 9
+#                 others = []
+#                 print("This is the key :", key)
+
+#                 for file in pdf_files:
+#                     str_pdf_file = str(file)
+#                     print(str_pdf_file)  # Log added
+#                     splitted_file = str_pdf_file.rsplit("\\", 1)[1].lower()
+#                     print("This is the splitted file :", splitted_file)  # Log added
+#                     try:
+#                         file_id = splitted_file.split("_")[0].lower()
+#                     except IndexError:
+#                         continue
+#                     if file_id != key:
+#                         continue
+
+#                     try:
+#                         print("Inside the try block.")  # Log added
+#                         with open(file, "rb") as f:
+#                             pdf_reader = PdfReader(f)
+#                             print("After reading the pdf.")  # Log added
+#                             first_page_text = pdf_reader.pages[0].extract_text() if len(pdf_reader.pages) >= 1 else ""
+#                             second_page_text = pdf_reader.pages[1].extract_text() if len(pdf_reader.pages) >= 2 else ""
+#                             print("This is the first page text :")  # Log added
+#                             print(first_page_text)  # Log added
+#                             print("End of first page text")  # Log added
+#                             print("This is the second page text:")  # Log added
+#                             print(second_page_text)  # Log added
+#                             print("End of second page text")  # Log added
+
+#                             if "X-RAY" in first_page_text or "X-RAY" in second_page_text:
+#                                 xray = file
+#                                 print("This is an xray file.")  # Log added
+#                             elif "OPTOMETRY" in first_page_text:
+#                                 optometry = file
+#                                 print("This is an opto file.")  # Log added
+#                             elif "ECG" in second_page_text or "Acquired on" in second_page_text:
+#                                 ecg_report = file
+#                                 print("This is an ecg file.")  # Log added
+#                             elif "RECORDERS & MEDICARE SYSTEMS" in first_page_text:
+#                                 pft = file
+#                                 print("This is a pft file.")  # Log added
+#                             elif "VITALS" in first_page_text:
+#                                 vitals = file
+#                                 print("This is a vitals file.")  # Log added
+#                             elif 'left ear' in first_page_text:
+#                                 audiometry = file
+#                                 print("This is a audio file.")  # Log added
+#                             elif 'RBC Count' in first_page_text or "PDW *" in second_page_text or "PDW" in second_page_text:
+#                                 blood_report = file
+#                                 print("This is a blood report.")  # Log added
+#                             elif 'SMART REPORT' in first_page_text:
+#                                 smart_report = file
+#                                 print("This is a smart report.")  # Log added
+#                             elif 'CERTIFICATE OF VACCINATION' in first_page_text:
+#                                 vaccination_report = file
+#                                 print("This is a vaccination file.")  # Log added
+#                             else:
+#                                 others.append(file)
+#                                 print("This is an others file.")  # Log added
+
+#                     except Exception as e:
+#                         print(f"Error processing file: {file}")  # Log added
+#                         original_filename = str(file).split("\\")[-1]
+#                         exception_files[str(file)] = (original_filename, str(e))
+#                         print(f"This file has an exception : {original_filename}")  # Log added
+#                         continue
+
+#                 processed_ids.add(key)
+#                 if any([xray, optometry, ecg_report, pft, audiometry, vitals, others, blood_report, smart_report, vaccination_report]):
+#                     merger = PdfMerger()
+
+#                     if smart_report: merger.append(smart_report)
+#                     if vitals: merger.append(vitals)
+#                     if ecg_report: merger.append(ecg_report)
+#                     if pft: merger.append(pft)
+#                     if audiometry: merger.append(audiometry)
+#                     if optometry: merger.append(optometry)
+#                     if xray: merger.append(xray)
+#                     if blood_report: merger.append(blood_report)
+#                     if vaccination_report: merger.append(vaccination_report)
+#                     c
+
+#                     base_file_name = (
+#                         xray.stem.split(".")[0].lower() if xray else
+#                         optometry.stem.split(".")[0].lower() if optometry else
+#                         ecg_report.stem.split(".")[0].lower() if ecg_report else
+#                         pft.stem.split(".")[0].lower() if pft else
+#                         audiometry.stem.split(".")[0].lower() if audiometry else
+#                         vitals.stem.split(".")[0].lower() if vitals else
+#                         vaccination_report.stem.split(".")[0].lower() if vaccination_report else
+#                         smart_report.stem.split(".")[0].lower() if smart_report else
+#                         blood_report.stem.split(".")[0].lower() if blood_report else
+#                         "NonRecognizable"
+#                     )
+#                     merged_file_path = merged_files_dir / f"{base_file_name}.pdf"
+#                     merger.write(str(merged_file_path))
+#                     print(f"Merged PDF saved to: {merged_file_path}")
+#                     merged_count += 1
+
+#             if exception_files:
+#                 problematic_files_dir = pdf_output_dir / "Problematic Files"
+#                 problematic_files_dir.mkdir(parents=True, exist_ok=True)
+#                 for file_path, (original_name, exception) in exception_files.items():
+#                     try:
+#                         shutil.copy2(file_path, problematic_files_dir / original_name)
+#                         print(f"Copied problematic file: {file_path} to {problematic_files_dir / original_name}")
+#                     except Exception as e:
+#                         print(f"Error copying problematic file: {file_path}. Error: {e}")
+
+#             total_input_count = len(pdf_files)
+
+#             if naming_errors:
+#                 problem_files_str = "\n".join([f"{i+1}. {name}" for i, name in enumerate(naming_errors.values())])
+#                 rename_issue_files_count = len(naming_errors)
+#                 tk.messagebox.showwarning("Naming Errors",
+#                                         f"Total {rename_issue_files_count} files have incorrect naming:\n{problem_files_str}\n\nNOTE:\nThese files were still merged if their IDs matched other correctly named files.")
+
+#             if exception_files:
+#                 exception_files_str = "\n".join([f"File : {name} \n Exception : {exception}" for name, (name, exception) in exception_files.values()])
+#                 problematic_file_count = len(exception_files)
+#                 tk.messagebox.showwarning("File Exceptions",
+#                                         f"Total {problematic_file_count} files had this issue : \n {exception_files_str} \n If in case you are not able to solve this problem, Contact Himanshu .")
+
+
+#             tk.messagebox.showinfo("PDF Merger", f"Total {total_input_count} PDF files processed. {merged_count} PDF files were merged successfully!")
+
+#         else:
+#             tk.messagebox.showwarning("Output Directory", "Output directory not selected.")
+#     else:
+#         tk.messagebox.showwarning("Input Directory", "Input directory not selected.")
+
+
+
+# This is my code working till version 4 , and all the changes i've done is mentioned in the readme file - Himanshu. 
 def merge_redcliffe_pdf_files():
     # Prompt user to select input directory
     input_directory = filedialog.askdirectory(title="Select Input Directory")
@@ -42,22 +213,34 @@ def merge_redcliffe_pdf_files():
             pdf_files = list(pdf_dir.glob("*.pdf"))
             print("These are the pdf files list :", pdf_files)
 
-            keys = set([str(file).split("\\")[-1].split("_")[0].lower() for file in pdf_files])
+            # keys = set([str(file).split("\\")[-1].split("_")[0].lower() for file in pdf_files])
+            keys = set()
+            naming_errors = {}
+            exception_files = {}
+
+            for file in pdf_files:
+                # This code is explicitly written to check the name format of the files - Himanshu.
+                try:
+                    original_filename = str(file).split("\\")[-1]
+                    file_id = str(file).split("\\")[-1].split("_")[0].lower()
+                    if "." in file_id:
+                        naming_errors[str(file)] = original_filename
+                        print(f"File {file} has incorrect naming format. Storing naming error: {original_filename}")
+                    else:
+                        keys.add(file_id)
+                except IndexError:
+                    original_filename = str(file).split("\\")[-1]
+                    naming_errors[str(file)] = original_filename
+                    # keys.add(file_id)
+                    print(f"File {file} has incorrect naming format. Storing naming error: {original_filename}")
+
+
 
             for key in keys:
-                xray = None
-                optometry = None
-                ecg_report = None
-                pft = None
-                audiometry = None
-                vitals = None
-                others = None
-                blood_report = None
-                smart_report = None
-                # Adding this too (Himanshu/12nov24)
-                vaccination_report = None
-                pdf_files_3_or_less = False
-                total_pdfs_less_than_3 = 0
+                xray, optometry, ecg_report, pft, audiometry, vitals, blood_report, smart_report, vaccination_report = [None] * 9
+                others = []
+                # pdf_files_3_or_less = False
+                # total_pdfs_less_than_3 = 0
 
                 print("This is the key :", key)
 
@@ -65,8 +248,8 @@ def merge_redcliffe_pdf_files():
                     print("Entering the for files in pdf_files loop")
                     str_pdf_file = str(file)
                     print(str_pdf_file)
-                    split_str_pdf_files = str_pdf_file.split("_")[1].lower()
-                    print("This is the splitted str :", split_str_pdf_files)
+                    # split_str_pdf_files = str_pdf_file.split("_")[1].lower()
+                    # print("This is the splitted str :", split_str_pdf_files)
                     splitted_file = str_pdf_file.rsplit("\\",1)[1].lower()
                     print("This is the splitted file :", splitted_file)
                     try:
@@ -115,7 +298,7 @@ def merge_redcliffe_pdf_files():
                             elif 'left ear' in first_page_text:
                                 audiometry = file
                                 print("This is a audio file.")
-                            elif 'RBC Count' in first_page_text or "PDW *" in second_page_text:
+                            elif 'RBC Count' in first_page_text or "PDW *" in second_page_text or "PDW" in second_page_text:
                                 blood_report = file
                                 print("This is a blood report.")
                             elif 'SMART REPORT' in first_page_text:
@@ -125,7 +308,7 @@ def merge_redcliffe_pdf_files():
                                 vaccination_report = file
                                 print("This is a vaccination file.")
                             else:
-                                others = file
+                                others.append(file)
                                 print("This is an others file.")
 
 
@@ -134,14 +317,18 @@ def merge_redcliffe_pdf_files():
                         print(f"Error details: {str(e)}")
 
                         # Move the problematic file to the error folder
-                        error_folder = pdf_output_dir / "error_pdf"
-                        error_folder.mkdir(parents=True, exist_ok=True)
-                        # move_to_error_folder(file, error_folder)
-                        shutil.copy2(file, error_folder)
+                        # error_folder = pdf_output_dir / "Problematic Files"
+                        # error_folder.mkdir(parents=True, exist_ok=True)
+                        # # move_to_error_folder(file, error_folder)
+                        # shutil.copy2(file, error_folder)
+                        # print(f"This is the problematic file : {file}")
+                        original_filename = str(file).split("\\")[-1]
+                        exception_files[original_filename] = str(e)  # Store in dictionary: filename as key, error as value
                         print(f"This is the problematic file : {file}")
 
                 # Check if at least one file is available for merging
-                if xray or optometry or ecg_report or pft or audiometry or vitals or others:
+                # if xray or optometry or ecg_report or pft or audiometry or vitals or others:
+                if any([xray, optometry, ecg_report, pft, audiometry, vitals, others, blood_report, smart_report, vaccination_report]):
                     merger = PdfMerger()
                     if smart_report:
                         merger.append(smart_report)
@@ -161,13 +348,15 @@ def merge_redcliffe_pdf_files():
                         merger.append(blood_report)
                     if vaccination_report:
                         merger.append(vaccination_report)
-                    if others:
-                        merger.append(others)
+                    # if others:
+                    #     merger.append(others)
+                    for other_file in others:
+                        merger.append(other_file)
 
-                    if len(merger.pages) >= 1:
-                        merged_pdf_dir = pdf_output_dir / "7_pages"
-                    else:
-                        pass
+                    # if len(merger.pages) >= 1:
+                    #     merged_pdf_dir = pdf_output_dir / "7_pages"
+                    # else:
+                    #     pass
 
                     base_file_name = (
                         xray.stem.split(".")[0].lower() if xray else
@@ -177,11 +366,12 @@ def merge_redcliffe_pdf_files():
                         audiometry.stem.split(".")[0].lower() if audiometry else
                         vitals.stem.split(".")[0].lower() if vitals else
                         vaccination_report.stem.split(".")[0].lower() if vaccination_report else
-                        others.stem.split(".")[0].lower() if others else
-                        "default_name"
+                        others[0].stem.split(".")[0].lower() if others else
+                        "NonRecognizable"
                     )
                     print(base_file_name)
 
+                    merged_pdf_dir = pdf_output_dir / "Merged Files"
                     merged_file_path = merged_pdf_dir / f"{base_file_name}.pdf"
                     merged_file_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -190,25 +380,69 @@ def merge_redcliffe_pdf_files():
 
             # Display message box after merging is complete
             total_input_count = len(pdf_files)
-            final_pagers = list((pdf_output_dir / "7_pages").glob("*.pdf"))
+            final_pagers = list((pdf_output_dir / "Merged Files").glob("*.pdf"))
             total_pdfs = len(final_pagers)
 
             total_count =  total_pdfs
             # Adding the count logics :
-            if total_count <= 3 :
-                pdf_files_3_or_less = True
-                # updating the count.
-                total_pdfs_less_than_3 += 1
+            # if total_count <= 3 :
+            #     pdf_files_3_or_less = True
+            #     # updating the count.
+            #     total_pdfs_less_than_3 += 1
 
             tk.messagebox.showinfo("PDF Merger", f"Total {total_input_count} PDF files merged into {total_count} PDF files successfully!")
 
             # Display message box with Less than 3 Pages if any
-            if pdf_files_3_or_less:
-                # file_list = "\n".join(str(file) for file in pdf_files_3_or_less)
-                tk.messagebox.showinfo("Missing Files",
-                                       f"Total {total_pdfs_less_than_3} merged PDF files have only less then 3 or more then 4 pages.")
-            else:
-                tk.messagebox.showinfo("No Missing Files", "All merged PDF files have 3 or 4 pages.")
+            # if pdf_files_3_or_less:
+            #     # file_list = "\n".join(str(file) for file in pdf_files_3_or_less)
+            #     tk.messagebox.showinfo("Missing Files",
+            #                            f"Total {total_pdfs_less_than_3} merged PDF files have only less then 3 or more then 4 pages.")
+            # else:
+            #     tk.messagebox.showinfo("No Missing Files", "All merged PDF files have 3 or 4 pages.")
+
+            if naming_errors:
+                # Write naming errors to "NamingErrors.txt" under "Naming Conflict"
+                naming_conflict_dir = pdf_output_dir / "Naming Conflict"
+                naming_conflict_dir.mkdir(parents=True, exist_ok=True)
+
+                naming_errors_path = naming_conflict_dir / "NamingErrors.txt"
+                with open(naming_errors_path, "w") as file:
+                    file.write(f"{len(naming_errors)} files are having naming conflicts:\n----------------------------------------------------------------------\n")
+                    # Enumerate to add index (starting from 1)
+                    for index, filename in enumerate(naming_errors.values(), 1):
+                        file.write(f"{index}. {filename}\n")
+
+                naming_error_messages = []  # List to store formatted naming error messages
+                for file_path, original_name in naming_errors.items():
+                    naming_error_messages.append(original_name)
+
+                naming_errors_str = "\n".join(naming_error_messages) #joining the naming error message with new line.
+                rename_issue_files_count = len(naming_errors)
+                tk.messagebox.showwarning("Naming Errors",
+                                        f"{rename_issue_files_count} file(s) is/are having the naming errors:\n\n{naming_errors_str}\n\nNOTE:\nThese files might've still got merged if their IDs matched other correctly named files, PLEASE CHECK!")
+
+            if exception_files:  # Only if there are exception files
+                error_folder = pdf_output_dir / "Problematic Files"
+                error_folder.mkdir(parents=True, exist_ok=True)
+
+                error_messages = []  # List to store formatted error messages
+                for filename, error_message in exception_files.items():
+                    try:
+                        original_file_path = pdf_dir / filename
+                        shutil.copy2(original_file_path, error_folder / filename)  # Copy with original filename
+                        print(f"Copied problematic file: {original_file_path} to {error_folder / filename}")
+                        error_messages.append(f"Name: {filename}, Error: {error_message}") #appending the error message
+                    except FileNotFoundError:
+                        print(f"Original file not found: {original_file_path}. Cannot copy.")
+                        error_messages.append(f"Name: {filename}, Error: File Not Found") #appending the error message
+                    except Exception as copy_error:
+                        print(f"Error copying problematic file: {original_file_path}. Error: {copy_error}")
+                        error_messages.append(f"Name: {filename}, Error: {copy_error}") #appending the error message
+
+                #Create the final message string
+                final_error_message = "These are the list of files that had errors:\n" + "\n".join(error_messages) + "\nIf problem is unrecognizable, Contact Himanshu."
+                print(final_error_message) #printing the final error message
+                tk.messagebox.showwarning("File Exceptions", final_error_message)
         else:
             tk.messagebox.showwarning("Output Directory", "Output directory not selected.")
     else:

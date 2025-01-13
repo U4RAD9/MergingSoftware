@@ -16,4 +16,11 @@ I've fixed the following things as of 23rd September 2024 :
 
 21 Nov 24 :
 1. There was one issue in the check pdf files functionality , the age extracted from the excel from which we need to compare was coming as float, so fixed it to get it as integer and then pass it as string.s
+
+10 Jan 25 :
+1. I have changed the logic of merging a person's individual file after version 4 ( i.e. merge_redcliffe_pdf_files fxn), where i have made some specific changes to handle the naming conflicts and the exceptions.
+2. Added the logic to give a message displaying the error in any pdf file name format.
+3. Also , Adding each and every others file that belongs to a particular id.
+4. Fixed the blood report issue (previously it was getting added using "PDW *" ,now also added "PDW").
+5. Also, commented a different optimized coding logic, which needs time to continue working on it.
 -- Himanshu Jangid.
