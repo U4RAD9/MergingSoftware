@@ -733,7 +733,9 @@ def remove_illegal_characters(value):
         value = re.sub(r'[\x00-\x1F\x7F-\x9F]', '', value)
     return value
 
-def extract_patient_data():
+# This function extract data from individual files (not merged ones) i.e. i have to pass all the folder where all the files are present,
+# i.e. all the files of all patients, then one by one all the data will get appended to the excel sheet. - HIMANSHU.
+def generate_excel_for_individual_files():
     input_directory = filedialog.askdirectory(title="Select Input Directory")
 
     if input_directory:
@@ -750,24 +752,24 @@ def extract_patient_data():
             pdf_files = list(input_dir.glob("*.pdf"))
             error_count = 0
 
+            # There are mainly 8 files here (leaving multiple formats of an individual) :
             patient_data_ecg = []
             patient_data_ecg1 = []
             patient_data_pft = []
             patient_data_xray = []
+            # Adding the remaining files too.
             patient_data_optometry = []
             patient_data_vitals = []
+            patient_data_audio = []
+            patient_data_blood = []
+            patient_data_others = []
 
-            total_ecg_files = 0
-            total_ecg_files1 = 0
-            total_pft_files = 0
-            total_xray_files = 0
-            total_optometry_files = 0
-            total_vitals_files = 0
+            # These are the count of individual files :
+            total_ecg_files, total_ecg_files1, total_pft_files, total_xray_files, total_optometry_files, total_vitals_files, total_audio_files, total_blood_files, total_others_files = [] * 9
 
-            excel_file_path_ecg = ""
-            excel_file_path_ecg1 = ""
-            excel_file_path_pft = ""
-            excel_file_path_xray = ""
+            # This is the excel file path for all these files :
+            excel_file_path_ecg, excel_file_path_pft, excel_file_path_xray, excel_file_path_opto, excel_file_path_vitals, excel_file_path_audio, excel_file_path_blood, excel_file_path_others = "" * 8
+            # Above i don't need to make the path for ecg1(i.e. coming for the drive.), because it is going to be appended to the place of 'ecg' only.
 
             workbook_xray = Workbook()
             sheet_xray = workbook_xray.active
@@ -1027,6 +1029,58 @@ def extract_patient_data():
     else:
         messagebox.showwarning("Input Folder Not Selected", "Input folder not selected.")
 
+# This is another function which reads the MERGED files one by one, and then tells for a patient, which files are present respectively, along with the data. - HIMANSHU.
+def generate_excel_for_merged_files():
+    messagebox.showwarning("Excel Data for All Individual Merged Files", "This is the Generate Excel Function for the Merged Files.")
+
+# This is the sample code to make a separate window to ask questions regarding which option our user wants to chose , 
+# I'll use this afterwards.
+# def count_of_tests_for_individual_patient():
+#     # Create a simple custom window to ask the user to select an option
+#     def on_select(option):
+#         nonlocal selected_option
+#         selected_option = option
+#         window.destroy()  # Close the window once an option is selected
+
+#     selected_option = None  # Variable to store the selected option
+
+#     # Create a new Tkinter window for option selection
+#     window = tk.Tk()
+#     window.title("Choose Option")
+#     window.geometry("300x150")
+
+#     # Add two buttons for options
+#     btn_individual = tk.Button(window, text="Count for Individual Files", command=lambda: on_select('individual'))
+#     btn_individual.pack(pady=10)
+    
+#     btn_merged = tk.Button(window, text="Count for Merged Files", command=lambda: on_select('merged'))
+#     btn_merged.pack(pady=10)
+
+#     # Start the window's event loop
+#     window.mainloop()
+
+#     # If no option was selected, show a warning and exit
+#     if selected_option is None:
+#         messagebox.showwarning("No Option Chosen", "You must select an option!")
+#         return
+
+#     # Logic based on the selected option
+#     if selected_option == 'individual':
+#         # Logic for individual files
+#         pdf_folder_path = filedialog.askdirectory(title="Select Individual Files Folder", mustexist=True)
+#         if not pdf_folder_path:
+#             print("Individual files folder not selected.")
+#             return
+#         # Add your logic for individual files here
+        
+#     elif selected_option == 'merged':
+#         # Logic for merged files
+#         pdf_folder_path = filedialog.askdirectory(title="Select Merged PDF Folder", mustexist=True)
+#         if not pdf_folder_path:
+#             print("Merged PDF folder not selected.")
+#             return
+#         # Add your logic for merged files here
+# This function is used to check the data wrt to a particular excel, that if the data is matching correctly or not. -HIMANSHU.
 def check_pdf_files():
     # Asking for the I/P Directory ( files that need to be checked with the excel.)
     pdf_folder_path = filedialog.askdirectory(title="Select Merged PDF Folder", mustexist=True)
@@ -1250,6 +1304,7 @@ def check_pdf_files():
                             if modality == "PFT" and "RECORDERS & MEDICARE SYSTEMS" in page_text:
                                 print("it confirms that it is a pft file.")
                                 patient_name = str(page_text).split("Patient: ")[1].split("Refd.By:")[0].split("\n")[0].lower()
+                                # Naming Issue required by team, making sure that there will be no space in the name.- Himanshu.
                                 if " " in patient_name:
                                     patient_name = patient_name.split(" ")[0]
                                 else:
@@ -1591,10 +1646,691 @@ def split_patient_file():
     else:
         print("Input directory not selected.")
 
+# This is my new function which will just give me the count or tell me whether what test's are done for a particular patient. - Himanshu.
+def count_of_tests_for_individual_patient():
+    # As of now , i am not able to use a simple dialogbox to make the user select option from my window directly.
+    # I've also thought of modifying the Yes and NO option in the ' messagebox.askquestion() ', but i guess I am not able to change these labels in tkinter directly as of now.
+    # If i get any other way to change these than i will use that part directly instead of creating a separate dialogbox.
+    
+    # This is the code that just opens the separate window for selecting the option.
+    # Creating a new Tkinter window for option selection.
+    optionWindow = tk.Toplevel(window)
+    optionWindow.title("Select an Option")
+    optionWindow.geometry("300x150")
 
-def check_ecg_files():
-    # o/p = "Here i will write logic to check the ecg files."
-    print(f"Here i will write the logic to check the ecg files.")
+    # Centering the optionWindow on the main window.
+    window_width = window.winfo_width()
+    window_height = window.winfo_height()
+    window_x = window.winfo_x()
+    window_y = window.winfo_y()
+    
+    # Calculating the position of the option window to be centered
+    option_window_x = window_x + (window_width // 2) - 150  # 150 is half the width of option window (300x150)
+    option_window_y = window_y + (window_height // 2) - 75  # 75 is half the height of option window
+    
+    optionWindow.geometry(f"300x150+{option_window_x}+{option_window_y}")
+
+    def option_selected(option):
+        nonlocal selected_option
+        selected_option = option
+        optionWindow.destroy()  # Close the option selection window
+    
+    selected_option = None  # Variable to store the selected option
+
+    # Add buttons for options
+    btn_individual = tk.Button(optionWindow, text="Count for Individual Files", command=lambda: option_selected(1), bg="gray", width=25)
+    btn_individual.pack(pady=20)
+    
+    btn_merged = tk.Button(optionWindow, text="Count for Merged Files", command=lambda: option_selected(2), bg="gray", width=25)
+    btn_merged.pack(pady=10)
+
+    # Start the window's event loop
+    optionWindow.grab_set()
+    # optionWindow.mainloop()
+    # Wait for the option window to be closed before continuing with the main program
+    window.wait_window(optionWindow)
+
+    # End of the separate selection window code.
+
+    # Start of the option respective logic.
+
+    # If no option was selected, show a warning and exit
+    if selected_option is None:
+        messagebox.showwarning("No Option Chosen", "You must select an option to continue with Excel Generation!")
+        return
+    
+    # Call select_folders to get both input and output folder paths
+    input_folder_path, output_folder_path = select_folders()
+    if not input_folder_path or not output_folder_path:
+        return
+
+    # Now, this will give me a list of only pdf files as the glob will only give me these, and then it will store them each in the list in the form of Path Object.
+    pdf_files = list(Path(input_folder_path).glob("*.pdf"))
+    print(pdf_files)
+    # Later, i will convert the path object in the binary format so that i can read it using our reader and manipulate my data accordingly.
+
+    # Collecting keys from the file names (extracted from the first part of the filename before the underscore)
+    # I will use these in case if in any file the id is missing for that unique patient.
+    keys = set()
+    naming_errors = {}
+    exception_files = {}
+    incomplete_data = {}
+    duplicate_file = {}
+    id_mismatch = {}
+
+    # Excel Workbook Setup.
+    wb = Workbook()
+    ws = wb.active
+
+    # As of now, i have total 15 headers only.
+    headers = ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 
+            'XRAY', 'ECG', 'AUDIOMETRY', 'OPTOMETRY', 'VITALS', 'PFT', 'PATHOLOGY', 'OTHERS']
+
+    # Adding headers in excel
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num)
+        cell.value = header
+        cell.font = Font(bold=True)
+
+    # Initializing the serial number for patient data.
+    serial_no = 1
+
+
+    # Logic based on the selected option
+    if selected_option == 1:
+        # Logic for individual files
+        print(f"Input Folder: {input_folder_path}")
+        print(f"Output Folder: {output_folder_path}")
+
+        # Looping through the list of PDF files if those are not merged yet.
+        for pdf_file in pdf_files:
+            # Opening each PDF file in binary mode
+            with open(pdf_file, 'rb') as file:
+                # Create a PdfReader object
+                pdf_reader = PyPDF2.PdfReader(file)
+        
+        
+    elif selected_option == 2:
+        # Logic for merged files
+        print(f"Input Folder: {input_folder_path}")
+        print(f"Output Folder: {output_folder_path}")
+
+        # still thinking where to include this logic , before the next code or inside ?????????????
+        # for file in pdf_files:
+        #     try:
+        #         original_filename = str(file).split("\\")[-1]
+        #         file_id = original_filename.split("_")[0].lower()
+        #         if "." in file_id:
+        #             naming_errors[str(file)] = original_filename
+        #             print(f"File {file} has incorrect naming format. Storing naming error: {original_filename}")
+        #         else:
+        #             keys.add(file_id)
+        #     except IndexError:
+        #         original_filename = str(file).split("\\")[-1]
+        #         naming_errors[str(file)] = original_filename
+        #         print(f"File {file} has incorrect naming format. Storing naming error: {original_filename}")
+
+        # print("Keys extracted from file names:", keys)
+        # print("Naming errors:", naming_errors)
+
+        # Initializing the patient_data dictionary before looping through each and every file so that i can use it to fill the excel.
+        patient_data = {
+            'patient_id': None,
+            'patient_name': None,
+            'patient_age': None,
+            'gender': None,
+            'test_date': None,
+            'report_date': None,
+            'XRAY': 'Not Present',
+            'ECG': 'Not Present',
+            'AUDIOMETRY': 'Not Present',
+            'OPTOMETRY': 'Not Present',
+            'VITALS': 'Not Present',
+            'PFT': 'Not Present',
+            'PATHOLOGY': 'Not Present',
+            'OTHERS': 'Not Present'
+        }
+
+
+        # Looping through the list of PDF files if those are already merged.
+        for pdf_file in pdf_files:
+            # This will extract the unique key from the file names.
+            try:
+                original_filename = str(pdf_file).split("\\")[-1]
+                file_id = original_filename.split("_")[0].lower()
+                if "." in file_id:
+                    naming_errors[str(file)] = original_filename
+                    print(f"File {pdf_file} has incorrect naming format. Storing naming error: {original_filename}")
+                    # Skipping to the next file in the loop, even if there is any naming error also, this will make sure that operations team do thier work properly.
+                    continue
+                else:
+                    if file_id in keys:
+                        # If file_id is already in the keys set, add it to the duplicate_file dictionary
+                        duplicate_file[file_id] = original_filename
+                        print(f"Duplicate file id : {file_id} found in File {pdf_file}, Skipping this file.")
+                        # Skipping to the next file in the loop
+                        continue
+                    else:
+                        # Otherwise, adding the file_id to the keys set
+                        keys.add(file_id)
+            except IndexError:
+                original_filename = str(pdf_file).split("\\")[-1]
+                naming_errors[str(pdf_file)] = original_filename
+                print(f"File {pdf_file} has incorrect naming format. Storing naming error: {original_filename}")
+                # Skipping to the next file in the loop, even if there is any naming error also, this will make sure that operations team do thier work properly.
+                continue
+            print("Keys extracted from file names:", keys)
+            print("Naming errors:", naming_errors)
+
+            # Making the modalities a set to store all the modalities for a particular id/key.
+            modalities = set()
+
+            # Initializing a empty dictionary to just store the patient details every time any file is processed.
+            patient_details= {'patient_id': None,'patient_name': None,'patient_age': None,'gender': None,'test_date': None,'report_date': None}
+
+            try:
+                # Opening each PDF file in binary mode
+                with open(pdf_file, 'rb') as file:
+                    # Creating a PdfReader object
+                    pdf_reader = PyPDF2.PdfReader(file)
+                    # Looping through each page in the PDF and save them as individual PDF files
+                    for page_number in range(len(pdf_reader.pages)):
+                        # Extract text data from the page to determine the modality
+                        page_text = pdf_reader.pages[page_number].extract_text()
+
+                        # Log the page text for debugging
+                        print("Page text is below")
+                        print(page_text)
+                        print("End of page text.")
+
+                        # Check the text content for known modalities
+                        if "X-RAY" in page_text:
+                            print("This is an X-ray file.")
+                            modalities.add('XRAY')
+                            # Getting the keys that are having None value.
+                            missing_keys = [key for key, value in patient_details.items() if value is None]
+                            # If there are missing keys, extract data only for those keys
+                            if missing_keys:
+                                # Extracting data from the bot xray data extractor function .
+                                xray_data = extract_data_from_the_bot_xray_file(page_text)
+                                # Updating only missing keys in patient_details
+                                for key in missing_keys:
+                                    if key in xray_data:
+                                        patient_details[key] = xray_data[key]
+
+                        elif "RECORDERS & MEDICARE SYSTEMS" in page_text:
+                            print("This is a PFT file.")
+                            modalities.add('PFT')
+                            # Getting the keys that are having None value.
+                            missing_keys = [key for key, value in patient_details.items() if value is None]
+                            # If there are missing keys, extract data only for those keys
+                            if missing_keys:
+                                # Extracting data from the bot xray data extractor function .
+                                xray_data = extract_data_from_bot_pft_file(page_text)
+                                # Updating only missing keys in patient_details
+                                for key in missing_keys:
+                                    if key in xray_data:
+                                        patient_details[key] = xray_data[key]
+                        elif "OPTOMETRY" in page_text:
+                            print("This is an Optometry file.")
+                            modalities.add('OPTOMETRY')
+                            # Getting the keys that are having None value.
+                            missing_keys = [key for key, value in patient_details.items() if value is None]
+                            # If there are missing keys, extract data only for those keys
+                            if missing_keys:
+                                # Extracting data from the bot xray data extractor function .
+                                xray_data = extract_data_from_bot_opto_file(page_text)
+                                # Updating only missing keys in patient_details
+                                for key in missing_keys:
+                                    if key in xray_data:
+                                        patient_details[key] = xray_data[key]
+                        elif "left ear" in page_text:
+                            print("This is an Audiometry file.")
+                            modalities.add('AUDIOMETRY')
+                            # Getting the keys that are having None value.
+                            missing_keys = [key for key, value in patient_details.items() if value is None]
+                            # If there are missing keys, extract data only for those keys
+                            if missing_keys:
+                                # Extracting data from the bot xray data extractor function .
+                                xray_data = extract_data_from_bot_audio_file(page_text)
+                                # Updating only missing keys in patient_details
+                                for key in missing_keys:
+                                    if key in xray_data:
+                                        patient_details[key] = xray_data[key]
+                        elif "ECG" in page_text:
+                            print("This is an ECG file.")
+                            modalities.add('ECG')
+                            # Getting the keys that are having None value.
+                            missing_keys = [key for key, value in patient_details.items() if value is None]
+                            # If there are missing keys, extract data only for those keys
+                            if missing_keys:
+                                # Extracting data from the bot xray data extractor function .
+                                xray_data = extract_data_from_bot_ecg_file(page_text)
+                                # Updating only missing keys in patient_details
+                                for key in missing_keys:
+                                    if key in xray_data:
+                                        patient_details[key] = xray_data[key]
+                        elif page_text == '':
+                            print("This is an Others image.")
+                            modalities.add('OTHERS')
+                        elif "VITALS" in page_text:
+                            print("This is a Vitals file.")
+                            # Getting the keys that are having None value.
+                            missing_keys = [key for key, value in patient_details.items() if value is None]
+                            # If there are missing keys, extract data only for those keys
+                            if missing_keys:
+                                # Extracting data from the bot xray data extractor function .
+                                xray_data = extract_data_from_bot_vitals_file(page_text)
+                                # Updating only missing keys in patient_details
+                                for key in missing_keys:
+                                    if key in xray_data:
+                                        patient_details[key] = xray_data[key]
+                            modalities.add('VITALS')
+                        elif "RBC Count" in page_text:
+                            print("This is a Blood Report.")
+                            modalities.add('PATHOLOGY')
+                            # Getting the keys that are having None value.
+                            missing_keys = [key for key, value in patient_details.items() if value is None]
+                            # If there are missing keys, extract data only for those keys
+                            if missing_keys:
+                                # Extracting data from the bot xray data extractor function .
+                                xray_data = extract_data_from_the_redcliffe_patho_file(page_text)
+                                # Updating only missing keys in patient_details
+                                for key in missing_keys:
+                                    if key in xray_data:
+                                        patient_details[key] = xray_data[key]
+                # Now, checking that is there any "None" or empty value in the patient details, if yes , that means there is incomplete data in it.
+                missing_keys = [key for key, value in patient_details.items() if value is None]
+                if missing_keys:
+                    incomplete_data[file_id] = original_filename
+                    print(f"Incomplete Data found in file id : {file_id} in File {pdf_file}, Please Review this file.")
+
+                # Checking if patient_id matches with the file_id
+                if patient_details['patient_id'] != file_id:
+                    id_mismatch[file_id] = original_filename
+                    print(f"Id in File : {pdf_file} and in it's filename is not matching, Please Review this file.")
+                # Now, I'll update the data in the patien_data dictionary so that i can simply use it to put it in the excel.
+                # After processing the pages of the current PDF file, just before moving to the next file:
+
+                # Updating patient_data from patient_details
+                for key in patient_details:
+                    patient_data[key] = patient_details[key]
+                    # if patient_details[key] is not None:
+                    #     patient_data[key] = patient_details[key]
+
+                # Checking the modalities set and update corresponding fields in patient_data
+                for modality in modalities:
+                    if modality in patient_data:
+                        patient_data[modality] = 'Present'
+
+                # I'll further process these now, as of now , printing these for additional logs.
+                print(f"Patient data for {file_id}: {patient_data}")
+
+                # Clearing the modalities set and patient_details dictionary for the next file
+                modalities.clear()
+                # Resetting values to None
+                for key in patient_details:
+                    patient_details[key] = None
+
+                print(f"(This is the confirmation to empty patient_details dictionary :{patient_details})")
+
+                # Adding patient data to Excel
+                row = serial_no + 1  # Since row 1 is for headers, data starts from row 2
+                # Adding the serial number in the first column
+                ws.cell(row=row, column=1, value=serial_no)  
+
+                # Looping through patient_data dictionary and fill each cell in the current row
+                for col_num, (key, value) in enumerate(patient_data.items(), 2):  # starting from column 2
+                    ws.cell(row=row, column=col_num, value=value)
+                    # Conditional coloring based on the value in the cell
+                    if value == "Present":
+                        # Green color for "Present"
+                        cell.fill = PatternFill(start_color="90EE90", end_color="90EE90", fill_type="solid")
+                    elif value == "None" or value == "Not Present":
+                        # Light Red color for "None" or "Not Present"
+                        cell.fill = PatternFill(start_color="FFCCCB", end_color="FFCCCB", fill_type="solid")
+
+                # Incrementing serial number for the next patient
+                serial_no += 1
+
+                # Resetting patient_data dictionary for the next iteration, i'll check afterwards whether it is needed or not.
+                # patient_data.clear()
+
+                # Saving the workbook after all data is processed
+                wb.save("patient_data.xlsx")
+
+
+            except Exception as e:
+                print(f"Error processing {input_folder_path}: {str(e)}")
+                exception_files[str(input_folder_path)] = str(e)
+                continue  # Skip this file and continue with the next
+
+    # Save the workbook to the output directory
+    output_filename = "Patient_Test_Details.xlsx"
+    output_file_path = os.path.join(output_folder_path, output_filename)
+    wb.save(output_file_path)
+
+    print(f"All the data extraction is completed and the errors are handled separately, and the data saved successfully to {output_file_path}.")
+    
+    # Display the completion message
+    messagebox.showinfo("Process Completed", 
+                        f"The Excel file has been generated and saved to the selected Output Directory: \n{output_file_path}\n\nThank you for using OTHM!")
+    
+    # After processing files, calling the function to handle all errors
+    handle_all_errors(naming_errors, duplicate_file, id_mismatch, incomplete_data, exception_files, output_folder_path)
+
+# These functions, I've created to improve the code readability and reduce the boiler plate codes.
+# -------------------------------- HELPER FUNCTIONS (HIMANSHU) --------------------------------------------------------
+
+# This is to ask the user for the input and output path to reduce the code redundancy. - Himanshu.
+def select_folders():
+    input_folder_path = filedialog.askdirectory(title="Select Input Files Folder", mustexist=True)
+    if not input_folder_path:
+        print("Input files folder not selected.")
+        tk.messagebox.showwarning("Input Directory", "Input directory not selected.")
+        return None, None
+    
+    output_folder_path = filedialog.askdirectory(title="Select Output Files Folder", mustexist=True)
+    if not output_folder_path:
+        print("Output files folder not selected.")
+        tk.messagebox.showwarning("Output Directory", "Output directory not selected.")
+        return None, None
+
+    return input_folder_path, output_folder_path
+
+# This is my function to extract data from all the pft files :
+def extract_data_from_bot_pft_file(pageText):
+    # Extracting the required information from the text
+    patient_info = {}
+    
+    try:
+        patient_info['patient_id'] = str(pageText).split("ID")[1].split("Age")[0].split(":")[1].strip()
+        patient_info['patient_name'] = str(pageText).split("Patient")[1].split("Refd.By:")[0].split(":")[1].strip()
+        patient_info['patient_age'] = str(pageText).split("Age    :")[1].split("Yrs")[0].strip()
+        patient_info['gender'] = str(pageText).split("Gender")[1].split("Smoker")[0].split(":")[1].strip()
+        patient_info['height'] = str(pageText).split("Height :")[1].split("Weight")[0].strip()
+        patient_info['weight'] = str(pageText).split("Weight")[1].split("Gender")[0].split(":")[1].split("Kgs")[0].strip()
+        patient_info['test_date'] = str(pageText).split("Date")[1][1:21].split(":")[1]
+        patient_info['report_date'] = patient_info['test_date']
+        patient_info['observation'] = str(pageText).split("Pre Test COPD Severity")[1].strip()
+    except IndexError:
+        print("Error extracting data from the first page text.")
+    
+    return patient_info
+
+# This is my function for extracting data from all ECG reports:
+def extract_data_from_bot_ecg_file(pageText):
+    patient_info = {}
+    try:
+        patient_info['patient_id'] = str(pageText).split('Patient ID:')[1].split('Age:')[0].strip()
+        patient_info['patient_name'] = str(pageText).split("Name:")[1].split("Patient ID:")[0].strip()
+        patient_info['patient_age'] = str(pageText).split("Age:")[1].split('Gender:')[0].strip()
+        patient_info['gender'] = str(pageText).split("Gender:")[1].split("Test date:")[0].strip()
+        patient_info['test_date'] = str(pageText).split("Test date:")[1].split('Report date:')[0].strip()
+        patient_info['report_date'] = str(pageText).split("Report date:")[1].split('ECG')[0].strip()
+        patient_info['heart_rate'] = str(pageText).split("Heart rate is")[1].split("BPM.")[0].strip()
+        patient_info['findings'] = str(pageText).split("2.")[1].split('.')[0].strip()
+    except IndexError:
+        print("Error extracting ECG data.")
+    return patient_info
+
+# This is my function for extracting data from X-ray reports:
+def extract_data_from_the_bot_xray_file(pageText):
+    patient_info = {}
+    try:
+        # Check if the "IMPRESSION:" text exists for finding data, right now , i am commenting it.
+        # findings_data = str(pageText).split('IMPRESSION:')[1].split("Dr.")[0]
+        # if "•" in findings_data:
+        #     findings = findings_data.split("•")[1].split(".")[0].strip()
+        # else:
+        #     findings = findings_data.strip()
+        
+        # If specific "Study Date" and "Report Date" condition applies, this i've still included in case the format changes.
+        if "Study Date" and "Report Date" in pageText:
+            patient_info['patient_id'] = str(pageText).split("Patient ID")[1].split(" ")[1].lower().strip()
+            patient_info['patient_name'] = str(pageText).split("Name")[1].split("Date")[0].split(" ")[0].strip().lower()
+            if "patient" in patient_info['patient_name']:
+                patient_info['patient_name'] = patient_info['patient_name'].split("patient")[0].strip()
+            print(patient_info['patient_id'], patient_info['patient_name'])
+        # Mostly this will be the case for our bot generated xrays.
+        else:
+            patient_info['patient_id'] = str(pageText).split('Patient ID:')[1].split('Age:')[0].strip()
+            patient_info['patient_name'] = str(pageText).split('Name:')[1].split('Patient ID:')[0].strip()
+            patient_info['patient_age'] = str(pageText).split('Age:')[1].split('Gender:')[0].strip()
+            patient_info['gender'] = str(pageText).split('Gender:')[1].split('Test date:')[0].strip()
+            patient_info['test_date'] = str(pageText).split('Test date:')[1].split('Report date:')[0].strip()
+            patient_info['report_date'] = str(pageText).split('Report date:')[1].split('X-RAY')[0].strip()
+        # This i will use to clean up the findings of the data.
+        # patient_info['findings'] = remove_illegal_characters(findings)
+    except IndexError:
+        print("Error extracting X-ray data.")
+    return patient_info
+
+# Function for extracting data from Blood reports
+def extract_data_from_the_redcliffe_patho_file(pageText):
+    patient_info = {}
+    try:
+        if "RBC Count" in pageText:
+            # Handling the different naming formats for patient name and ID in blood reports
+            if "Patient Name :" in pageText:
+                complete_patient_name = str(pageText).split("Patient Name : ")[1].split("DOB/")[0].strip()
+                patient_info['patient_id'] = complete_patient_name.rsplit(" ", 1)[1]
+                patient_info['patient_name'] = complete_patient_name.rsplit(" ", 1)[0].split(" ", 1)[1].lower()
+            elif "Patient NAME :" in pageText:
+                complete_patient_name = str(pageText).split("Patient NAME : ")[1].split("DOB/")[0].strip()
+                patient_info['patient_id'] = complete_patient_name.rsplit("_", 1)[1]
+                patient_info['patient_name'] = complete_patient_name.rsplit("_", 1)[0].split(" ", 1)[1].lower()
+            elif "PATIENT NAME :" in pageText:
+                complete_patient_name = str(pageText).split("PATIENT NAME : ")[1].split("DOB/")[0].strip()
+                patient_info['patient_id'] = complete_patient_name.rsplit("_", 1)[1]
+                patient_info['patient_name'] = complete_patient_name.rsplit("_", 1)[0].split(" ", 1)[1].lower()
+            elif "PATIENT Name :" in pageText:
+                complete_patient_name = str(pageText).split("PATIENT Name : ")[1].split("DOB/")[0].strip()
+                patient_info['patient_id'] = complete_patient_name.rsplit("_", 1)[1]
+                patient_info['patient_name'] = complete_patient_name.rsplit("_", 1)[0].split(" ", 1)[1].lower()
+            
+            # These are mostly not changed in the formatting, so taking them out of the conditions.
+            patient_info['patient_age'] = str(pageText).split('DOB/Age/Gender :')[1].split('Patient ID / UHID :')[0].split('Y/')[0].strip()
+            patient_info['gender'] = str(pageText).split('DOB/Age/Gender :')[1].split('Patient ID / UHID :')[0].split('Y/')[1].strip()
+            patient_info['test_date'] = str(pageText).split('Sample Collected :')[1].split('Report STATUS :')[0].strip()
+            patient_info['report_date'] = str(pageText).split('Report Date :')[1].split('Test Description')[0].strip()
+            
+            print("Patient Name:", patient_info['patient_name'])
+            print("Patient ID:", patient_info['patient_id'])
+    except IndexError:
+        print("Error extracting blood report data.")
+    return patient_info
+
+# This is my function for extracting data from all Reporting Bot Audiometry Reports:
+def extract_data_from_bot_audio_file(pageText):
+    patient_info = {}
+    try:
+        patient_info['patient_id'] = str(pageText).split('Patient ID')[1].split('Age')[0].strip()
+        patient_info['patient_name'] = str(pageText).split("Name")[1].split("Patient ID")[0].strip()
+        patient_info['patient_age'] = str(pageText).split("Age")[1].split('Gender')[0].strip()
+        patient_info['gender'] = str(pageText).split("Gender")[1].split("Test date")[0].strip()
+        patient_info['test_date'] = str(pageText).split("Test date")[1].split('Report date')[0].strip()
+        patient_info['report_date'] = str(pageText).split("Report date")[1].strip()
+    except IndexError:
+        print("Error extracting Audiometry data.")
+    return patient_info
+
+# This is my function for extracting data from all Reporting Bot Optometry Reports:
+def extract_data_from_bot_opto_file(pageText):
+    patient_info = {}
+    try:
+        patient_info['patient_id'] = str(pageText).split('Patient ID:')[1].split('Patient Name:')[0].strip()
+        patient_info['patient_name'] = str(pageText).split("Patient Name:")[1].split("Age:")[0].strip()
+        patient_info['patient_age'] = str(pageText).split("Age:")[1].split('Gender:')[0].strip()
+        patient_info['gender'] = str(pageText).split("Gender:")[1].split("Test Date:")[0].strip()
+        patient_info['test_date'] = str(pageText).split("Test Date:")[1].split('Report Date:')[0].strip()
+        patient_info['report_date'] = str(pageText).split("Report Date:")[1].split('OPTOMETRY')[0].strip()
+    except IndexError:
+        print("Error extracting Optometry data.")
+    return patient_info
+
+# This is my function for extracting data from all Reporting Bot Vitals Reports:
+def extract_data_from_bot_vitals_file(pageText):
+    patient_info = {}
+    try:
+        patient_info['patient_id'] = str(pageText).split('Patient ID:')[1].split('Patient Name:')[0].strip()
+        patient_info['patient_name'] = str(pageText).split("Patient Name:")[1].split("Age:")[0].strip()
+        patient_info['patient_age'] = str(pageText).split("Age:")[1].split('Gender:')[0].strip()
+        patient_info['gender'] = str(pageText).split("Gender:")[1].split("Test Date:")[0].strip()
+        patient_info['test_date'] = str(pageText).split("Test Date:")[1].split('Report Date:')[0].strip()
+        patient_info['report_date'] = str(pageText).split("Report Date:")[1].split('VITALS')[0].strip()
+    except IndexError:
+        print("Error extracting Vitals data.")
+    return patient_info
+
+# Function to write errors to the error file and accumulate the messages
+import shutil
+from pathlib import Path
+
+def write_errors_to_file(naming_errors, duplicate_file, id_mismatch, incomplete_data, exception_files, output_folder_path, pdf_dir):
+    # Ensure output_folder_path exists
+    output_folder_path = Path(output_folder_path)
+    output_folder_path.mkdir(parents=True, exist_ok=True)
+    
+    # Define the paths for the error subdirectories
+    naming_error_folder = output_folder_path / "NamingErrorFiles"
+    duplicate_files_folder = output_folder_path / "DuplicateFiles"
+    id_mismatch_folder = output_folder_path / "IdMismatchFiles"
+    incomplete_data_folder = output_folder_path / "IncompleteDataFiles"
+    exception_files_folder = output_folder_path / "ExceptionFiles"
+    
+    # Ensure all error directories exist
+    naming_error_folder.mkdir(parents=True, exist_ok=True)
+    duplicate_files_folder.mkdir(parents=True, exist_ok=True)
+    id_mismatch_folder.mkdir(parents=True, exist_ok=True)
+    incomplete_data_folder.mkdir(parents=True, exist_ok=True)
+    exception_files_folder.mkdir(parents=True, exist_ok=True)
+
+    # Define the error details file path
+    error_details_file = output_folder_path / "ErrorDetails.txt"
+    
+    with open(error_details_file, "w") as file:
+        file.write("The files that were processed were having the following errors:\n")
+        file.write("==============================\n\n")
+
+        # Naming Errors
+        if naming_errors:
+            naming_error_count = len(naming_errors)
+            file.write(f"Naming Errors:\n")
+            file.write(f"{naming_error_count} files are having naming issues:\n")
+            for file_id, original_filename in naming_errors.items():
+                file.write(f"File ID: {file_id}, Filename: {original_filename}\n")
+                # Copy the file to the respective folder
+                try:
+                    original_file_path = pdf_dir / original_filename
+                    shutil.copy2(original_file_path, naming_error_folder / original_filename)
+                except Exception as e:
+                    file.write(f"Error copying {original_filename} to NamingErrorFiles: {e}\n")
+                    file.write("Please Contact Himanshu to resolve this issue.\n")
+            file.write("\n-------------------------------\n\n")
+
+        # Duplicate Files
+        if duplicate_file:
+            duplicate_file_count = len(duplicate_file)
+            file.write(f"Duplicate Files:\n")
+            file.write(f"{duplicate_file_count} files are duplicates:\n")
+            for file_id, original_filename in duplicate_file.items():
+                file.write(f"File ID: {file_id}, Filename: {original_filename}\n")
+                # Copy the file to the respective folder
+                try:
+                    original_file_path = pdf_dir / original_filename
+                    shutil.copy2(original_file_path, duplicate_files_folder / original_filename)
+                except Exception as e:
+                    file.write(f"Error copying {original_filename} to DuplicateFiles: {e}\n")
+                    file.write("Please Contact Himanshu to resolve this issue.\n")
+            file.write("\n-------------------------------\n\n")
+
+        # ID Mismatch
+        if id_mismatch:
+            id_mismatch_count = len(id_mismatch)
+            file.write(f"ID Mismatch:\n")
+            file.write(f"{id_mismatch_count} files have ID mismatches:\n")
+            for file_id, original_filename in id_mismatch.items():
+                file.write(f"File ID: {file_id}, Filename: {original_filename}\n")
+                # Copy the file to the respective folder
+                try:
+                    original_file_path = pdf_dir / original_filename
+                    shutil.copy2(original_file_path, id_mismatch_folder / original_filename)
+                except Exception as e:
+                    file.write(f"Error copying {original_filename} to IdMismatchFiles: {e}\n")
+                    file.write("Please Contact Himanshu to resolve this issue.\n")
+            file.write("\n-------------------------------\n\n")
+
+        # Incomplete Data
+        if incomplete_data:
+            incomplete_data_count = len(incomplete_data)
+            file.write(f"Incomplete Data Files:\n")
+            file.write(f"{incomplete_data_count} files have incomplete data:\n")
+            for file_id, filename in incomplete_data.items():
+                file.write(f"File ID: {file_id}, Filename: {filename}\n")
+                # Copy the file to the respective folder
+                try:
+                    original_file_path = pdf_dir / filename
+                    shutil.copy2(original_file_path, incomplete_data_folder / filename)
+                except Exception as e:
+                    file.write(f"Error copying {filename} to IncompleteDataFiles: {e}\n")
+                    file.write("Please Contact Himanshu to resolve this issue.\n")
+            file.write("\n-------------------------------\n\n")
+
+        # Exception Files
+        if exception_files:
+            exception_file_count = len(exception_files)
+            file.write(f"Exception Files:\n")
+            file.write(f"{exception_file_count} files encountered errors:\n")
+            for filename, error_message in exception_files.items():
+                file.write(f"FileName: {filename}, Error: {error_message}\n")
+                # Copy the file to the respective folder
+                try:
+                    original_file_path = pdf_dir / filename
+                    shutil.copy2(original_file_path, exception_files_folder / filename)
+                except Exception as e:
+                    file.write(f"Error copying {filename} to ExceptionFiles: {e}\n")
+                    file.write("Please Contact Himanshu to resolve this issue.\n")
+            file.write("\n-------------------------------\n\n")
+
+    # I can make the above code more optimized where i am using multiple times the file.write functionality.
+    # I will update it later.
+    
+    print(f"Error details written to {error_details_file}")
+
+
+# Show warning message box if there are any errors
+def show_warning_message(naming_errors, duplicate_file, id_mismatch, incomplete_data, exception_files):
+    warning_message = ""
+
+    if naming_errors:
+        warning_message += f"{len(naming_errors)} file(s) had naming conflicts.\n"
+    if duplicate_file:
+        warning_message += f"{len(duplicate_file)} duplicate file(s) found.\n"
+    if id_mismatch:
+        warning_message += f"{len(id_mismatch)} file(s) had ID mismatches.\n"
+    if incomplete_data:
+        warning_message += f"{len(incomplete_data)} file(s) had incomplete data.\n"
+    if exception_files:
+        warning_message += f"{len(exception_files)} problematic file(s) encountered.\n"
+
+    if warning_message:
+        tk.messagebox.showwarning("Errors in File Processing", warning_message)
+
+# Main function to handle all errors and generate the file
+def handle_all_errors(naming_errors, duplicate_file, id_mismatch, incomplete_data, exception_files, output_folder_path):
+    if naming_errors or duplicate_file or id_mismatch or incomplete_data or exception_files:
+        # Write all errors to the error details file
+        write_errors_to_file(naming_errors, duplicate_file, id_mismatch, incomplete_data, exception_files, output_folder_path)
+        # Show the warning message box with a consolidated summary of errors
+        show_warning_message(naming_errors, duplicate_file, id_mismatch, incomplete_data, exception_files)
+    else:
+        print("No errors found.")
+
+
+# This function i will make later , when i will include our orthanc pacs generated xray (or all) reports in automations.
+
+#  ----------------------------------- END OF HELPER FUNCTIONS (HIMANSHU) ------------------------------------------------------------------
 
 # def dcm_to_pdf_converter():
 #     input_directory = filedialog.askdirectory(title="Select Input Directory")
@@ -1623,39 +2359,39 @@ def check_ecg_files():
 
 # Create the main window
 window = tk.Tk()
-window.title("Camp - Automation Tools")
+window.title("OTHM - Operation Tasks Helping Machine")
 # Set the window dimensions and position it on the screen
 window.geometry("1000x500+200-100")
 
 
-redcliffe_label = tk.Label(window, text="Merge Pdf Files", font=("Arial", 16, "bold"))
-redcliffe_label.place(x=580, y=10, anchor='ne')
+redcliffe_label = tk.Label(window, text="Merging For Individual", font=("Arial", 16, "bold"))
+redcliffe_label.place(x=620, y=10, anchor='ne')
 
 # Adding the label of Merge All files button .
-merge_all_files = tk.Label(window, text="Merge All PDF Files", font=("Arial", 16, "bold"))
+merge_all_files = tk.Label(window, text="Merge Everything", font=("Arial", 16, "bold"))
 merge_all_files.place(x=600, y=130, anchor='ne')
 
-merge_redcliffe_button1 = tk.Button(window, bg='blue', fg='white', activebackground='darkblue', activeforeground='white', padx=30, pady=10, relief='raised', text="Merge PDF Files", command=merge_redcliffe_pdf_files, font=("Arial", 12, "bold"))
+merge_redcliffe_button1 = tk.Button(window, bg='blue', fg='white', activebackground='darkblue', activeforeground='white', padx=25, pady=10, relief='raised', text="Merge PDF Files", command=merge_redcliffe_pdf_files, font=("Arial", 12, "bold"))
 merge_redcliffe_button2 = tk.Button(window, bg='magenta', fg='black', activebackground='gold', activeforeground='black', padx=30, pady=10, relief='raised', text="Merge All PDF Files", command=merge_all, font=("Arial", 12, "bold"))
 merge_redcliffe_button1.place(x=600, y=58, anchor='ne')
 merge_redcliffe_button2.place(x=623, y=178, anchor='ne')
 
 pdf_rename_label = tk.Label(window, text="File Renaming System", font=("Arial", 16, "bold"))
-pdf_rename_label.pack(pady=10, padx=20, anchor='w')
+pdf_rename_label.pack(pady=10, padx=30, anchor='w')
 
-pdf_rename_button1 = tk.Button(window, bg='orange', fg='black', activebackground='darkblue', activeforeground='white', padx=30, pady=10, relief='raised', text="Rename PDF Files", command=rename_pdf_files, font=("Arial", 12, "bold"))
+pdf_rename_button1 = tk.Button(window, bg='orange', fg='black', activebackground='darkblue', activeforeground='white', padx=50, pady=10, relief='raised', text="Rename PDF Files", command=rename_pdf_files, font=("Arial", 12, "bold"))
 pdf_rename_button1.pack(pady=8, padx=20, anchor='w')
 
-generate_excel_label = tk.Label(window, text="Data Extracting System", font=("Arial", 16, "bold"))
-generate_excel_label.place(x=259, y=130, anchor='ne')
+generate_excel_label = tk.Label(window, text="Count of Individual's Tests", font=("Arial", 16, "bold"))
+generate_excel_label.place(x=305, y=130, anchor='ne')
 
-generate_excel_button = tk.Button(window, bg='pink',fg='black', activebackground='darkblue', activeforeground='white',padx=30, pady=10, relief='raised', text="Generate Patient Excel", command=extract_patient_data, font=("Arial", 12, "bold"))
-generate_excel_button.place(x=262, y=180, anchor='ne')
+generate_excel_button = tk.Button(window, bg='pink',fg='black', activebackground='darkblue', activeforeground='white',padx=40, pady=10, relief='raised', text="Patient's Test Count", command=count_of_tests_for_individual_patient, font=("Arial", 12, "bold"))
+generate_excel_button.place(x=300, y=180, anchor='ne')
 
 check_pdf_File = tk.Label(window, text="Check Pdf Files", font=("Arial", 16, "bold"))
-check_pdf_File.place(x=920, y=10, anchor='ne')
+check_pdf_File.place(x=930, y=10, anchor='ne')
 
-check_pdf_button = tk.Button(window, bg='green',fg='black', activebackground='darkblue', activeforeground='white',padx=30, pady=10, relief='raised', text="Check Pdf Files", command=check_pdf_files, font=("Arial", 12, "bold"))
+check_pdf_button = tk.Button(window, bg='green',fg='black', activebackground='darkblue', activeforeground='white',padx=37, pady=10, relief='raised', text="Check Pdf Files", command=check_pdf_files, font=("Arial", 12, "bold"))
 check_pdf_button.place(x=956, y=57, anchor='ne')
 
 check_pdf_File = tk.Label(window, text="Split Pdf Files", font=("Arial", 16, "bold"))
@@ -1664,11 +2400,19 @@ check_pdf_File.place(x=903, y=130, anchor='ne')
 check_pdf_button = tk.Button(window, bg='yellow',fg='black', activebackground='darkblue', activeforeground='white',padx=30, pady=10, relief='raised', text="Split Pdf Files", command=split_patient_file, font=("Arial", 12, "bold"))
 check_pdf_button.place(x=940, y=175, anchor='ne')
 
-check_ecg_files_label = tk.Label(window, text="Check ECG Files", font=("Arial", 16, "bold"))
-check_ecg_files_label.place(x = 580, y=250, anchor='ne')
+# Label for the check Generate Excel for Merged Files button.
+check_ecg_files_label = tk.Label(window, text="Data Extraction For Merged Files", font=("Arial", 16, "bold"))
+check_ecg_files_label.place(x = 345, y=250, anchor='ne')
+# Button for the check ecg file label.
+check_ecg_files_button = tk.Button(window, bg='grey',fg='black', activebackground='darkgrey', activeforeground='white',padx=30, pady=10, relief='raised', text="Generate Excel for Merged Files", command=generate_excel_for_merged_files, font=("Arial", 12, "bold"))
+check_ecg_files_button.place(x= 330, y=310, anchor='ne')
 
-check_ecg_files_button = tk.Button(window, bg='red',fg='black', activebackground='darkred', activeforeground='white',padx=30, pady=10, relief='raised', text="Check ECG Files", command=check_ecg_files, font=("Arial", 12, "bold"))
-check_ecg_files_button.place(x=605, y=310, anchor='ne')
+# Label for the check ecg file button.
+check_ecg_files_label = tk.Label(window, text="Data Extraction For Individual Files", font=("Arial", 16, "bold"))
+check_ecg_files_label.place(x = 780, y=250, anchor='ne')
+# Button for the check ecg file label.
+check_ecg_files_button = tk.Button(window, bg='red',fg='black', activebackground='red', activeforeground='white',padx=30, pady=10, relief='raised', text="Generate Excel For Individual File", command=generate_excel_for_individual_files, font=("Arial", 12, "bold"))
+check_ecg_files_button.place(x=805, y=310, anchor='ne')
 
 
 # dcm_to_pdf = tk.Label(window, text="Reports Observation", font=("Arial", 16, "bold"))

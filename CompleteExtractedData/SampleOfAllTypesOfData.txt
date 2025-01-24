@@ -1,0 +1,600 @@
+This is all types of data for a unique patient, so i can reference this file for my work with OTHM (Merging Software) - Himanshu.
+=================================================================================================================================
+These are the details of Mr. Madhav : ( All 8 files - MFine - Latest)
+-----------------------------------------------------------------------
+
+
+Name: madhavPatient ID: 003602Age: 28Gender: MaleTest date: 2025-01-06Report date: 2025-01-06
+ECG Observation: 1. Heart rate is 66 BPM. 2. Normal Sinus Rhythm. 3. No significant ST-T changes seen. .
+Patient: MADHAV
+Refd.By:
+Pred.Eqns: RECORDERS
+Date : 06-Jan-2025 03:43 PM ID : 003602
+Age : 28 Yrs
+Height : 170 Cms
+Weight : 56 Kgs
+Gender : Male
+Smoker : No
+Eth. Corr: 100
+Temp :
+Plot # 196,Industrial Area,Phase-1, Panchkula, Haryana INDIA - 134113
+RECORDERS & MEDICARE SYSTEMS
+The contents of this report require clinical co-relation before any clinical action. http://www.rmsindia.com © RMS Spirometer(Helios_v3.2.49)
+Parameter Pred M.Pre %Pred M.Post %Pred %Imp
+FVC (L)
+FEV1 (L)
+FEV1/FVC (%)
+FEF25-75 (L/s)
+PEFR (L/s)
+FIVC (L)
+FEV.5 (L)
+FEV3 (L)
+PIFR (L/s)
+FEF75-85 (L/s)
+FEF.2-1.2(L/s)
+FEF 25% (L/s)
+FEF 50% (L/s)
+FEF 75% (L/s)
+FEV.5/FVC (%)
+FEV3/FVC (%)
+FET (Sec)
+ExplTime (Sec)
+Lung Age (Yrs)
+FEV6 (L)
+FIF25% (L/s)
+FIF50% (L/s)
+FIF75% (L/s)
+03.62
+03.08
+85.08
+04.48
+09.27
+-----
+-----
+03.51
+-----
+-----
+07.71
+08.12
+05.98
+03.21
+-----
+96.96
+-----
+-----
+028
+03.62
+-----
+-----
+-----
+03.62
+03.41
+94.20
+04.59
+07.40
+03.26
+02.66
+03.62
+02.91
+01.89
+06.51
+07.06
+05.25
+02.40
+73.48
+100.00
+01.29
+00.12
+025
+-----
+02.36
+02.76
+02.30
+100
+111
+111
+102
+080
+---
+---
+103
+---
+---
+084
+087
+088
+075
+---
+103
+---
+---
+089
+---
+---
+---
+---
+-----
+-----
+-----
+-----
+-----
+-----
+-----
+-----
+-----
+-----
+-----
+-----
+-----
+-----
+-----
+-----
+-----
+-----
+-----
+-----
+-----
+-----
+-----
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+---
+FVC Results
+FEF25%
+FEF50%
+FEF75%
+FVC
+PEFR
+FEV1
+FEV3 FEV6 FVC
+PRE
+POST
+V(Litres)
+F(Litres/Sec)
+ 1 2 3 4 5 6 7 8
+ 16
+ 14
+ 12
+ 10
+ 8
+ 6
+ 4
+ 2
+ 0
+-2
+-4
+-6
+-8
+-10
+T(Seconds)
+V(Litres)
+ 1 2 3 4 5 6 7 8
+ 8
+ 7
+ 6
+ 5
+ 4
+ 3
+ 2
+ 1
+ 0
+Pre Medication Report Indicates
+Spirometry within normal limits as (FEV1/FVC)%Pred >95 and FVC%Pred >80
+ 25 50 75 100 125 150
+ 150
+ 125
+ 100
+ 75
+ 50
+ 25
+ 0
+(FEV1/FVC)%Pred
+FVC%Pred Interpretation
+MIXED RES
+OBS NORM
+ 25 50 75 100 125 150
+ 150
+ 125
+ 100
+ 75
+ 50
+ 25
+ 0
+(FEV1/FVC)%Pred
+FEV1 %Pred COPD SEVERITY
+OBS NORM
+VERY SEVERE
+SEVERE
+MODERATE
+RES
+Pre Test COPD Severity
+Test within normal limits
+Finding:
+Normal in left ear.
+Normal in right ear.
+
+ Name
+ MADHAV
+ Patient ID
+ 3602
+ Age
+ 29
+
+
+ Gender
+ Male
+ Test date
+ 2025-01-06
+ Report date
+ 2025-01-06
+
+
+
+Name: MADHAVPatient ID: 003602Age: 028YGender: MaleTest date: 2025-01-06Report date: 2025-01-07
+X-RAY - CHEST PA VIEW OBSERVATIONS: The trachea is central.Lung zones are clear.Both hila are normal.Cardiophrenic and costophrenic angles are normal.The mediastinal and cardiac silhouette are normal.Bones of the thoracic cage are normal.Soft tissues of the chest wall are normal.Cardiothoracic ratio is normal. IMPRESSION: • No significant abnormality seen. DR SAI NARENMBBS, M.D.(Radio Diagnosis)<>TNMC-118013
+U4 Rad - Xrai Onsite Camp
+Complete Blood Count (CBC)
+RBC Parameters
+Hemoglobin
+colorimetric
+14.5 g/dL 13.0 - 17.0
+RBC Count
+Electrical impedance
+4.6 10^6/µl 4.5 - 5.5
+PCV
+Calculated
+40.9 % 40 - 50
+MCV
+Calculated
+89.6 fl 83 - 101
+MCH
+Calculated
+31.9 pg 27 - 32
+MCHC
+Calculated
+35.6 g/dL 31.5 - 34.5
+RDW (CV)
+Calculated
+12.7 % 11.6 - 14.0
+RDW-SD
+Calculated
+37 fl 35.1 - 43.9
+WBC Parameters
+TLC
+Electrical impedance and microscopy
+7.37 10^3/µl 4 - 10
+Differential Leucocyte Count
+Neutrophils 75 % 40-80
+Lymphocytes 15 % 20-40
+Monocytes 8 % 2-10
+Eosinophils 2 % 1-6
+Basophils 0 % <2
+Absolute Leukocyte Counts
+calculated
+Neutrophils. 5.53 10^3/µl 2 - 7
+Lymphocytes. 1.11 10^3/µl 1 - 3
+Monocytes. 0.59 10^3/µl 0.2 - 1.0
+Eosinophils. 0.15 10^3/µl 0.02 - 0.5
+Basophils. 0 10^3/µl 0.02 - 0.5
+Platelet Parameters
+Platelet Count
+Electrical impedance and microscopy
+152 10^3/µl 150 - 410
+Mean Platelet Volume (MPV)
+Calculated
+12.5 fL 9.3 - 12.1
+PCT
+Calculated
+0.2 % 0.17 - 0.32 ....
+Patient NAME : Mr MADHAV_3602
+DOB/Age/Gender : 28 Y/Male
+Patient ID / UHID : 10992529/RCL10206640
+Referred BY : Self
+Sample Collected : Jan 06, 2025, 09:00 AM
+Report STATUS : Final Report
+Barcode NO : HR101225
+Sample Type : Whole blood EDTA
+Report Date : Jan 07, 2025, 03:58 PM.
+Test Description Value(s) Unit(s) Reference Range
+    
+Booking Centre :- U4 Rad, C-406, 4th floor, Nirvana Courtyard, Sector 50, Gurugram, Haryana 122018
+Processing Lab :- Redcliffe Lifetech Pvt. Ltd., SCO 171, Sector 37-C, Chandigarh-160036
+Page 1 of 8
+PDW
+Calculated
+21.3 fL 8.3 - 25.0
+P-LCR
+Calculated
+56 % 18 - 50
+P-LCC
+Calculated
+85 10^9/L 44 - 140
+Mentzer Index
+Calculated
+19.48 % > 13
+Interpretation:
+CBC provides information about red cells, white cells and platelets. Results are useful in the diagnosis of anemia, infections, leukemias, clotting
+disorders and many other medical conditions.
+Patient NAME : Mr MADHAV_3602
+DOB/Age/Gender : 28 Y/Male
+Patient ID / UHID : 10992529/RCL10206640
+Referred BY : Self
+Sample Collected : Jan 06, 2025, 09:00 AM
+Report STATUS : Final Report
+Barcode NO : HR101225
+Sample Type : Whole blood EDTA
+Report Date : Jan 07, 2025, 03:58 PM.
+Test Description Value(s) Unit(s) Reference Range
+    
+Booking Centre :- U4 Rad, C-406, 4th floor, Nirvana Courtyard, Sector 50, Gurugram, Haryana 122018
+Processing Lab :- Redcliffe Lifetech Pvt. Ltd., SCO 171, Sector 37-C, Chandigarh-160036
+Page 2 of 8
+Erythrocyte Sedimentation Rate (ESR)
+ESR - Erythrocyte Sedimentation Rate
+MODIFIED WESTERGREN
+8 mm/hr 0 - 10
+Interpretation:
+ESR is also known as Erythrocyte Sedimentation Rate. An ESR test is used to assess inflammation in the body. Many conditions can cause an
+abnormal ESR, so an ESR test is typically used with other tests to diagnose and monitor different diseases. An elevated ESR may occur in
+inflammatory conditions including infection, rheumatoid arthritis ,systemic vasculitis, anemia, multiple myeloma , etc. Low levels are typically
+seen in congestive heart failure, polycythemia ,sickle cell anemia, hypo fibrinogenemia , etc.
+Reference- Dacie and lewis practical hematology ....
+Patient NAME : Mr MADHAV_3602
+DOB/Age/Gender : 28 Y/Male
+Patient ID / UHID : 10992529/RCL10206640
+Referred BY : Self
+Sample Collected : Jan 06, 2025, 09:00 AM
+Report STATUS : Final Report
+Barcode NO : HR101225
+Sample Type : Whole blood EDTA
+Report Date : Jan 07, 2025, 06:11 PM.
+Test Description Value(s) Unit(s) Reference Range
+    
+Booking Centre :- U4 Rad, C-406, 4th floor, Nirvana Courtyard, Sector 50, Gurugram, Haryana 122018
+Processing Lab :- Redcliffe Lifetech Pvt. Ltd., SCO 171, Sector 37-C, Chandigarh-160036
+Page 3 of 8
+Blood Group ABO & Rh Typing
+Blood Group A - -
+Rh Factor Positive - -
+Interpretation:
+Interpreting the results of a blood group test involves understanding the ABO blood group and Rh factor results. We can interpret them as
+follows:
+ABO Blood Grouping:
+Blood Group A: Has A antigens on red blood cells and anti-B antibodies in the plasma.
+Blood Group B: Has B antigens on red blood cells and anti-A antibodies in the plasma.
+Blood Group AB: Has both A and B antigens on red blood cells and no anti-A or anti-B antibodies in the plasma.
+Blood Group O: Has no A or B antigens on red blood cells but has both anti-A and anti-B antibodies in the plasma.
+Rh Typing:
+Rh-positive: Indicates the presence of the Rh antigen (D antigen) on red blood cells.
+Rh-negative: Indicates the absence of the Rh antigen on red blood cells.
+Interpreting your blood group involves identifying which antigens are present on your red blood cells (A, B, or both) and whether you are Rhpositive or Rh-negative. For example, if your blood group is A-positive, it means you have A antigens and Rh antigen on your red blood cells.
+Knowing your blood group is important for medical purposes, such as blood transfusions, organ transplants, and during pregnancy to prevent
+potential complications related to blood compatibility.
+ ....
+Patient NAME : Mr MADHAV_3602
+DOB/Age/Gender : 28 Y/Male
+Patient ID / UHID : 10992529/RCL10206640
+Referred BY : Self
+Sample Collected : Jan 06, 2025, 09:00 AM
+Report STATUS : Final Report
+Barcode NO : HR101225
+Sample Type : Whole blood EDTA
+Report Date : Jan 07, 2025, 04:45 PM.
+Test Description Value(s) Unit(s) Reference Range
+    
+Booking Centre :- U4 Rad, C-406, 4th floor, Nirvana Courtyard, Sector 50, Gurugram, Haryana 122018
+Processing Lab :- Redcliffe Lifetech Pvt. Ltd., SCO 171, Sector 37-C, Chandigarh-160036
+Page 4 of 8
+Glucose Random
+Glucose Random
+(Fluoride Plasma-R,Hexokinase)
+73 mg/dL <140 mg/dL: Normal
+Interpretation:
+1.Also known as Casual plasma glucose .
+2.Samples can be taken anytime during the day regardless of eating time.
+3.Random blood glucose level of equal to or more than 200mg/dl is indicative of Diabetes mellitus.
+Source: ADA Guidelines ....
+Patient NAME : Mr MADHAV_3602
+DOB/Age/Gender : 28 Y/Male
+Patient ID / UHID : 10992529/RCL10206640
+Referred BY : Self
+Sample Collected : Jan 06, 2025, 09:00 AM
+Report STATUS : Final Report
+Barcode NO : ZF985299
+Sample Type : Fluoride Plasma
+Report Date : Jan 07, 2025, 04:08 PM.
+Test Description Value(s) Unit(s) Reference Range
+    
+Booking Centre :- U4 Rad, C-406, 4th floor, Nirvana Courtyard, Sector 50, Gurugram, Haryana 122018
+Processing Lab :- Redcliffe Lifetech Pvt. Ltd., SCO 171, Sector 37-C, Chandigarh-160036
+Page 5 of 8
+Creatinine
+Creatinine
+Kinetic alkaline picrate
+0.81 mg/dL 0.72 - 1.25 mg/dL
+eGFR (CKD-EPI) 123.15 ml/min/1.73 sq m Normal Or High: >= 90
+Mild Or Decrease: 60-89
+Mild To Moderate Decrease:
+45-59
+Mild To Severe Decrease:
+30-44
+Severe Decrease: 15-29
+Kidney Failure: < 15
+Interpretation:
+Creatinine estimation is done to assess kidney function. It is not dependent on dietary factors. Normal values are obtained in kidney diseases,
+except in advanced renal failure and therefore its estimation is more valuable if coupled with clearance.
+"eGFR test is applicable for patients aged 18 years or more."
+ ....
+Patient NAME : Mr MADHAV_3602
+DOB/Age/Gender : 28 Y/Male
+Patient ID / UHID : 10992529/RCL10206640
+Referred BY : Self
+Sample Collected : Jan 06, 2025, 09:00 AM
+Report STATUS : Final Report
+Barcode NO : ZF985298
+Sample Type : Serum
+Report Date : Jan 07, 2025, 03:55 PM.
+Test Description Value(s) Unit(s) Reference Range
+    
+Booking Centre :- U4 Rad, C-406, 4th floor, Nirvana Courtyard, Sector 50, Gurugram, Haryana 122018
+Processing Lab :- Redcliffe Lifetech Pvt. Ltd., SCO 171, Sector 37-C, Chandigarh-160036
+Page 6 of 8
+Urine Routine and Microscopic Examination
+Physical Examination
+Volume 15 ml -
+Colour Pale yellow - Pale yellow
+Transparency Clear - Clear
+Deposit Absent - Absent
+Chemical Examination
+Reaction (pH)
+Double Indicator
+6.0 - 4.5 - 8.0
+Specific Gravity
+Ion Exchange
+1.020 - 1.010 - 1.030
+Urine Glucose (sugar)
+Oxidase / Peroxidase
+Negative - Negative
+Urine Protein (Albumin)
+Acid / Base Colour Excahnge
+Negative - Negative
+Urine Ketones (Acetone)
+Legals Test
+Negative - Negative
+Blood
+Peroxidase Hemoglobin
+Negative - Negative
+Leucocyte esterase
+Enzymatic Reaction
+Negative - Negative
+Bilirubin Urine
+Coupling Reaction
+Negative - Negative
+Nitrite
+Griless Test
+Negative - Negative
+Urobilinogen
+Ehrlichs Test
+Normal - Normal
+Microscopic Examination
+Pus Cells (WBCs) 1-2 /hpf 0 - 5
+Epithelial Cells 1-2 /hpf 0 - 4
+Red blood Cells Absent /hpf Absent
+Crystals Absent - Absent
+Cast Absent - Absent
+Yeast Cells Absent - Absent
+Amorphous deposits Absent - Absent
+Bacteria Absent - Absent
+Protozoa Absent - Absent
+Interpretation:
+URINALYSIS- Routine urine analysis assists in screening and diagnosis of various metabolic, urological, kidney and liver disorders.
+Protein: Elevated proteins can be an early sign of kidney disease. Urinary protein excretion can also be temporarily elevated by strenuous
+exercise, orthostatic proteinuria, dehydration, urinary tract infections and acute illness with fever ....
+Patient NAME : Mr MADHAV_3602
+DOB/Age/Gender : 28 Y/Male
+Patient ID / UHID : 10992529/RCL10206640
+Referred BY : Self
+Sample Collected : Jan 06, 2025, 09:00 AM
+Report STATUS : Final Report
+Barcode NO : YB626077
+Sample Type : Spot Urine
+Report Date : Jan 07, 2025, 05:32 PM.
+Test Description Value(s) Unit(s) Reference Range
+    
+Booking Centre :- U4 Rad, C-406, 4th floor, Nirvana Courtyard, Sector 50, Gurugram, Haryana 122018
+Processing Lab :- Redcliffe Lifetech Pvt. Ltd., SCO 171, Sector 37-C, Chandigarh-160036
+Page 7 of 8
+Glucose: Uncontrolled diabetes mellitus can lead to presence of glucose in urine. Other causes include pregnancy, hormonal disturbances,
+liver disease and certain medications.
+Ketones: Uncontrolled diabetes mellitus can lead to presence of ketones in urine. Ketones can also be seen in starvation, frequent vomiting,
+pregnancy and strenuous exercise.
+Blood: Occult blood can occur in urine as intact erythrocytes or haemoglobin, which can occur in various urological, nephrological and bleeding
+disorders.
+Leukocytes: An increase in leukocytes is an indication of inflammation in urinary tract or kidneys. Most common cause is bacterial urinary tract
+infection.
+Nitrite: Many bacteria give positive results when their number is high. Nitrite concentration during infection increases with length of time the
+urine specimen is retained in bladder prior to collection.
+pH: The kidneys play an important role in maintaining acid base balance of the body. Conditions of the body producing acidosis/ alkalosis or
+ingestion of certain type of food can affect the pH of urine.
+Specific gravity: Specific gravity gives an indication of how concentrated the urine is. Increased specific gravity is seen in conditions like
+dehydration, glycosuria and proteinuria while decreased specific gravity is seen in excessive fluid intake, renal failure and diabetes insipidus.
+Bilirubin: In certain liver diseases such as biliary obstruction or hepatitis, bilirubin gets excreted in urine.
+Urobilinogen: Positive results are seen in liver diseases like hepatitis and cirrhosis and in cases of haemolytic anaemia.
+*** End Of Report ***
+Patient NAME : Mr MADHAV_3602
+DOB/Age/Gender : 28 Y/Male
+Patient ID / UHID : 10992529/RCL10206640
+Referred BY : Self
+Sample Collected : Jan 06, 2025, 09:00 AM
+Report STATUS : Final Report
+Barcode NO : YB626077
+Sample Type : Spot Urine
+Report Date : Jan 07, 2025, 05:32 PM.
+Test Description Value(s) Unit(s) Reference Range
+    
+Booking Centre :- U4 Rad, C-406, 4th floor, Nirvana Courtyard, Sector 50, Gurugram, Haryana 122018
+Processing Lab :- Redcliffe Lifetech Pvt. Ltd., SCO 171, Sector 37-C, Chandigarh-160036
+Page 8 of 8
+Terms and Conditions of Reporting
+1. The presented findings in the Reports are intended solely for informational and interpretational purposes by the
+ referring physician or other qualified medical professionals possessing a comprehensive understanding of
+ reporting units, reference ranges, and technological limitations. The laboratory shall not be held liable for any
+ interpretation or misinterpretation of the results, nor for any consequential or incidental damages arising from
+ such interpretation.
+2. It is to be presumed that the tests performed pertain to the specimen/sample attributed to the Customer's name
+ or identification. It is presumed that the verification particulars have been cleared out by the customer or his/her
+ representation at the point of generation of said specimen / sample. It is hereby clarified that the reports
+ furnished are restricted solely to the given specimen only.
+3. It is to be noted that variations in results may occur between different laboratories and over time, even for the
+ same parameter for the same Customer. The assays are performed and conducted in accordance with standard
+ procedures, and the reported outcomes are contingent on the specific individual assay methods and equipment(s)
+ used, as well as the quality of the received specimen.
+
+4. This report shall not be deemed valid or admissible for any medico-legal purposes.
+5. The Customers assume full responsibility for apprising the Company of any factors that may impact the test
+ finding. These factors, among others, includes dietary intake, alcohol, or medication / drug(s) consumption, or
+ fasting. This list of factors is only representative and not exhaustive.
+

@@ -23,4 +23,9 @@ I've fixed the following things as of 23rd September 2024 :
 3. Also , Adding each and every others file that belongs to a particular id.
 4. Fixed the blood report issue (previously it was getting added using "PDW *" ,now also added "PDW").
 5. Also, commented a different optimized coding logic, which needs time to continue working on it.
+
+22 Jan 25:
+1. I've created another function which takes input as all the merged files which means all files for a particular patient, where it first tells that which files are present for a particular patient, and than gives the data present in the files in the form of excel, named as generate_excel_for_merged_files.
+2. The respective button for above function is 'Generate Excel For Merged Files'.
+3. I've also changed the function which creates excel for the patients where as of now only xray, ecg , and pft excels were coming as output. Now, that will also have Audio, Opto, Vitals, Blood and Other Files(mostly dr. consultation).
 -- Himanshu Jangid.
