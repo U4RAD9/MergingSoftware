@@ -1707,6 +1707,8 @@ def count_of_tests_for_individual_patient():
     # Now, this will give me a list of only pdf files as the glob will only give me these, and then it will store them each in the list in the form of Path Object.
     pdf_files = list(Path(input_folder_path).glob("*.pdf"))
     print(pdf_files)
+    # Getting the no. of files that i've processed.
+    num_files_processed = len(pdf_files)
     # Later, i will convert the path object in the binary format so that i can read it using our reader and manipulate my data accordingly.
 
     # Collecting keys from the file names (extracted from the first part of the filename before the underscore)
@@ -1774,23 +1776,7 @@ def count_of_tests_for_individual_patient():
         # print("Naming errors:", naming_errors)
 
         # Initializing the patient_data dictionary before looping through each and every file so that i can use it to fill the excel.
-        patient_data = {
-            'patient_id': None,
-            'patient_name': None,
-            'patient_age': None,
-            'gender': None,
-            'test_date': None,
-            'report_date': None,
-            'XRAY': 'Not Present',
-            'ECG': 'Not Present',
-            'AUDIOMETRY': 'Not Present',
-            'OPTOMETRY': 'Not Present',
-            'VITALS': 'Not Present',
-            'PFT': 'Not Present',
-            'PATHOLOGY': 'Not Present',
-            'OTHERS': 'Not Present'
-        }
-
+        patient_data = creating_or_emptying_the_patient_data_dictionary()
 
         # Looping through the list of PDF files if those are already merged.
         for pdf_file in pdf_files:
@@ -1838,14 +1824,13 @@ def count_of_tests_for_individual_patient():
                         # Extract text data from the page to determine the modality
                         page_text = pdf_reader.pages[page_number].extract_text()
 
-                        # Log the page text for debugging
-                        print("Page text is below")
-                        print(page_text)
-                        print("End of page text.")
+                        # Log the page text for debugging, this will print every page.
+                        # print_page_text_for_logging(page_text)
 
                         # Check the text content for known modalities
                         if "X-RAY" in page_text:
-                            print("This is an X-ray file.")
+                            # This will print text only when any modality matches.
+                            print_page_text_for_logging(page_text)
                             modalities.add('XRAY')
                             # Getting the keys that are having None value.
                             missing_keys = [key for key, value in patient_details.items() if value is None]
@@ -1853,12 +1838,19 @@ def count_of_tests_for_individual_patient():
                             if missing_keys:
                                 # Extracting data from the bot xray data extractor function .
                                 xray_data = extract_data_from_the_bot_xray_file(page_text)
+                                print("Data extracted from the xray report.")
+                                # This will tell me the patient details when any field in it is empty.
+                                print(f"This is the patient details just before adding the extracted data in it, because some fields were empty in it :\n {patient_details}")
                                 # Updating only missing keys in patient_details
                                 for key in missing_keys:
                                     if key in xray_data:
                                         patient_details[key] = xray_data[key]
+                                # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
+                                print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
 
                         elif "RECORDERS & MEDICARE SYSTEMS" in page_text:
+                            # This will print text only when any modality matches.
+                            print_page_text_for_logging(page_text)
                             print("This is a PFT file.")
                             modalities.add('PFT')
                             # Getting the keys that are having None value.
@@ -1867,11 +1859,19 @@ def count_of_tests_for_individual_patient():
                             if missing_keys:
                                 # Extracting data from the bot xray data extractor function .
                                 xray_data = extract_data_from_bot_pft_file(page_text)
+                                print("Data extracted from the pft report.")
+                                # This will tell me the patient details when any field in it is empty.
+                                print(f"This is the patient details just before adding the extracted data in it, because some fields were empty in it :\n {patient_details}")
                                 # Updating only missing keys in patient_details
                                 for key in missing_keys:
                                     if key in xray_data:
                                         patient_details[key] = xray_data[key]
+                                # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
+                                print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
+
                         elif "OPTOMETRY" in page_text:
+                            # This will print text only when any modality matches.
+                            print_page_text_for_logging(page_text)
                             print("This is an Optometry file.")
                             modalities.add('OPTOMETRY')
                             # Getting the keys that are having None value.
@@ -1880,11 +1880,19 @@ def count_of_tests_for_individual_patient():
                             if missing_keys:
                                 # Extracting data from the bot xray data extractor function .
                                 xray_data = extract_data_from_bot_opto_file(page_text)
+                                print("Data extracted from the optometry report.")
+                                # This will tell me the patient details when any field in it is empty.
+                                print(f"This is the patient details just before adding the extracted data in it, because some fields were empty in it :\n {patient_details}")
                                 # Updating only missing keys in patient_details
                                 for key in missing_keys:
                                     if key in xray_data:
                                         patient_details[key] = xray_data[key]
+                                # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
+                                print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
+
                         elif "left ear" in page_text:
+                            # This will print text only when any modality matches.
+                            print_page_text_for_logging(page_text)
                             print("This is an Audiometry file.")
                             modalities.add('AUDIOMETRY')
                             # Getting the keys that are having None value.
@@ -1893,11 +1901,19 @@ def count_of_tests_for_individual_patient():
                             if missing_keys:
                                 # Extracting data from the bot xray data extractor function .
                                 xray_data = extract_data_from_bot_audio_file(page_text)
+                                print("Data extracted from the audiometry report.")
+                                # This will tell me the patient details when any field in it is empty.
+                                print(f"This is the patient details just before adding the extracted data in it, because some fields were empty in it :\n {patient_details}")
                                 # Updating only missing keys in patient_details
                                 for key in missing_keys:
                                     if key in xray_data:
                                         patient_details[key] = xray_data[key]
+                                # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
+                                print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
+
                         elif "ECG" in page_text:
+                            # This will print text only when any modality matches.
+                            print_page_text_for_logging(page_text)
                             print("This is an ECG file.")
                             modalities.add('ECG')
                             # Getting the keys that are having None value.
@@ -1906,27 +1922,46 @@ def count_of_tests_for_individual_patient():
                             if missing_keys:
                                 # Extracting data from the bot xray data extractor function .
                                 xray_data = extract_data_from_bot_ecg_file(page_text)
+                                print("Data extracted from the ecg report.")
+                                # This will tell me the patient details when any field in it is empty.
+                                print(f"This is the patient details just before adding the extracted data in it, because some fields were empty in it :\n {patient_details}")
                                 # Updating only missing keys in patient_details
                                 for key in missing_keys:
                                     if key in xray_data:
                                         patient_details[key] = xray_data[key]
+                                # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
+                                print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
+
                         elif page_text == '':
+                            # This will print text only when any modality matches.
+                            print_page_text_for_logging(page_text)
                             print("This is an Others image.")
+                            print("Since it is an others file, means the page is blank, No data to extract.")
                             modalities.add('OTHERS')
                         elif "VITALS" in page_text:
+                            # This will print text only when any modality matches.
+                            print_page_text_for_logging(page_text)
                             print("This is a Vitals file.")
+                            modalities.add('VITALS')
                             # Getting the keys that are having None value.
                             missing_keys = [key for key, value in patient_details.items() if value is None]
                             # If there are missing keys, extract data only for those keys
                             if missing_keys:
                                 # Extracting data from the bot xray data extractor function .
                                 xray_data = extract_data_from_bot_vitals_file(page_text)
+                                print("Data extracted from the vitals report.")
+                                # This will tell me the patient details when any field in it is empty.
+                                print(f"This is the patient details just before adding the extracted data in it, because some fields were empty in it :\n {patient_details}")
                                 # Updating only missing keys in patient_details
                                 for key in missing_keys:
                                     if key in xray_data:
                                         patient_details[key] = xray_data[key]
-                            modalities.add('VITALS')
+                                # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
+                                print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
+
                         elif "RBC Count" in page_text:
+                            # This will print text only when any modality matches.
+                            print_page_text_for_logging(page_text)
                             print("This is a Blood Report.")
                             modalities.add('PATHOLOGY')
                             # Getting the keys that are having None value.
@@ -1935,10 +1970,18 @@ def count_of_tests_for_individual_patient():
                             if missing_keys:
                                 # Extracting data from the bot xray data extractor function .
                                 xray_data = extract_data_from_the_redcliffe_patho_file(page_text)
+                                print("Data extracted from the pathology report.")
+                                # This will tell me the patient details when any field in it is empty.
+                                print(f"This is the patient details just before adding the extracted data in it, because some fields were empty in it :\n {patient_details}")
                                 # Updating only missing keys in patient_details
                                 for key in missing_keys:
                                     if key in xray_data:
                                         patient_details[key] = xray_data[key]
+                                # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
+                                print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
+
+                        # Only the above conditions will tell that whether it is a particular test or not, if others are needed , I'll update them here.
+
                 # Now, checking that is there any "None" or empty value in the patient details, if yes , that means there is incomplete data in it.
                 missing_keys = [key for key, value in patient_details.items() if value is None]
                 if missing_keys:
@@ -1947,7 +1990,8 @@ def count_of_tests_for_individual_patient():
 
                 # Checking if patient_id matches with the file_id
                 if patient_details['patient_id'] != file_id:
-                    id_mismatch[file_id] = original_filename
+                    id_extracted = patient_details['patient_id']
+                    id_mismatch[id_extracted] = original_filename
                     print(f"Id in File : {pdf_file} and in it's filename is not matching, Please Review this file.")
                 # Now, I'll update the data in the patien_data dictionary so that i can simply use it to put it in the excel.
                 # After processing the pages of the current PDF file, just before moving to the next file:
@@ -1981,7 +2025,7 @@ def count_of_tests_for_individual_patient():
 
                 # Looping through patient_data dictionary and fill each cell in the current row
                 for col_num, (key, value) in enumerate(patient_data.items(), 2):  # starting from column 2
-                    ws.cell(row=row, column=col_num, value=value)
+                    cell = ws.cell(row=row, column=col_num, value=value)
                     # Conditional coloring based on the value in the cell
                     if value == "Present":
                         # Green color for "Present"
@@ -1999,6 +2043,9 @@ def count_of_tests_for_individual_patient():
                 # Saving the workbook after all data is processed
                 wb.save("patient_data.xlsx")
 
+                patient_data = creating_or_emptying_the_patient_data_dictionary()
+                print(f"This is also the confirmation that the main patient data dictioanary is also emptied : \n {patient_data}")
+
 
             except Exception as e:
                 print(f"Error processing {input_folder_path}: {str(e)}")
@@ -2007,20 +2054,46 @@ def count_of_tests_for_individual_patient():
 
     # Save the workbook to the output directory
     output_filename = "Patient_Test_Details.xlsx"
-    output_file_path = os.path.join(output_folder_path, output_filename)
+    output_file_path = Path(output_folder_path) / output_filename
     wb.save(output_file_path)
 
     print(f"All the data extraction is completed and the errors are handled separately, and the data saved successfully to {output_file_path}.")
     
     # Display the completion message
     messagebox.showinfo("Process Completed", 
-                        f"The Excel file has been generated and saved to the selected Output Directory: \n{output_file_path}\n\nThank you for using OTHM!")
+                        f"Total {num_files_processed} files were Processed.\n\nThe Excel file has been generated and saved to the selected Output Directory : \n{output_file_path}\n\n\nThank you for using OTHM !")
     
     # After processing files, calling the function to handle all errors
-    handle_all_errors(naming_errors, duplicate_file, id_mismatch, incomplete_data, exception_files, output_folder_path)
+    handle_all_errors(naming_errors, duplicate_file, id_mismatch, incomplete_data, exception_files, output_folder_path, input_folder_path)
 
 # These functions, I've created to improve the code readability and reduce the boiler plate codes.
 # -------------------------------- HELPER FUNCTIONS (HIMANSHU) --------------------------------------------------------
+
+# This function simply prints the data wnen needed for logging, to make the code non boiler plate code. - Himanshu.
+def print_page_text_for_logging(page_text):
+    print("Starting of this page(or file) text :")
+    print(page_text)
+    print("End of this page(or file) text.")
+
+# This function i've made to do both work, creating or emptying the patient data dictionary , when needed.
+def creating_or_emptying_the_patient_data_dictionary():
+    patient_data = {
+            'patient_id': None,
+            'patient_name': None,
+            'patient_age': None,
+            'gender': None,
+            'test_date': None,
+            'report_date': None,
+            'XRAY': 'Not Present',
+            'ECG': 'Not Present',
+            'AUDIOMETRY': 'Not Present',
+            'OPTOMETRY': 'Not Present',
+            'VITALS': 'Not Present',
+            'PFT': 'Not Present',
+            'PATHOLOGY': 'Not Present',
+            'OTHERS': 'Not Present'
+        }
+    return patient_data
 
 # This is to ask the user for the input and output path to reduce the code redundancy. - Himanshu.
 def select_folders():
@@ -2173,12 +2246,22 @@ def extract_data_from_bot_opto_file(pageText):
 def extract_data_from_bot_vitals_file(pageText):
     patient_info = {}
     try:
-        patient_info['patient_id'] = str(pageText).split('Patient ID:')[1].split('Patient Name:')[0].strip()
-        patient_info['patient_name'] = str(pageText).split("Patient Name:")[1].split("Age:")[0].strip()
-        patient_info['patient_age'] = str(pageText).split("Age:")[1].split('Gender:')[0].strip()
-        patient_info['gender'] = str(pageText).split("Gender:")[1].split("Test Date:")[0].strip()
-        patient_info['test_date'] = str(pageText).split("Test Date:")[1].split('Report Date:')[0].strip()
-        patient_info['report_date'] = str(pageText).split("Report Date:")[1].split('VITALS')[0].strip()
+        # This is for our reporting bot vitals file.
+        if "Patient Name:" in pageText:
+            patient_info['patient_id'] = str(pageText).split('Patient ID:')[1].split('Patient Name:')[0].strip()
+            patient_info['patient_name'] = str(pageText).split("Patient Name:")[1].split("Age:")[0].strip()
+            patient_info['patient_age'] = str(pageText).split("Age:")[1].split('Gender:')[0].strip()
+            patient_info['gender'] = str(pageText).split("Gender:")[1].split("Test Date:")[0].strip()
+            patient_info['test_date'] = str(pageText).split("Test Date:")[1].split('Report Date:')[0].strip()
+            patient_info['report_date'] = str(pageText).split("Report Date:")[1].split('VITALS')[0].strip()
+        # This was some other format which i found in one of the vitals files.
+        else:
+            patient_info['patient_id'] = str(pageText).split('Patient ID:')[1].split('Age:')[0].strip()
+            patient_info['patient_name'] = str(pageText).split("Name:")[1].split("Patient ID:")[0].strip()
+            patient_info['patient_age'] = str(pageText).split("Age:")[1].split('Gender:')[0].strip()
+            patient_info['gender'] = str(pageText).split("Gender:")[1].split("Test date:")[0].strip()
+            patient_info['test_date'] = str(pageText).split("Test date:")[1].split('Report date:')[0].strip()
+            patient_info['report_date'] = str(pageText).split("Report date:")[1].split('VITALS')[0].strip()
     except IndexError:
         print("Error extracting Vitals data.")
     return patient_info
@@ -2187,10 +2270,13 @@ def extract_data_from_bot_vitals_file(pageText):
 import shutil
 from pathlib import Path
 
-def write_errors_to_file(naming_errors, duplicate_file, id_mismatch, incomplete_data, exception_files, output_folder_path, pdf_dir):
+def write_errors_to_file(naming_errors, duplicate_file, id_mismatch, incomplete_data, exception_files, output_folder_path, input_folder_path):
     # Ensure output_folder_path exists
     output_folder_path = Path(output_folder_path)
     output_folder_path.mkdir(parents=True, exist_ok=True)
+
+    # Converting input folder path also into path object.
+    input_folder_path = Path(input_folder_path)
     
     # Define the paths for the error subdirectories
     naming_error_folder = output_folder_path / "NamingErrorFiles"
@@ -2198,31 +2284,26 @@ def write_errors_to_file(naming_errors, duplicate_file, id_mismatch, incomplete_
     id_mismatch_folder = output_folder_path / "IdMismatchFiles"
     incomplete_data_folder = output_folder_path / "IncompleteDataFiles"
     exception_files_folder = output_folder_path / "ExceptionFiles"
-    
-    # Ensure all error directories exist
-    naming_error_folder.mkdir(parents=True, exist_ok=True)
-    duplicate_files_folder.mkdir(parents=True, exist_ok=True)
-    id_mismatch_folder.mkdir(parents=True, exist_ok=True)
-    incomplete_data_folder.mkdir(parents=True, exist_ok=True)
-    exception_files_folder.mkdir(parents=True, exist_ok=True)
 
     # Define the error details file path
     error_details_file = output_folder_path / "ErrorDetails.txt"
     
     with open(error_details_file, "w") as file:
         file.write("The files that were processed were having the following errors:\n")
-        file.write("==============================\n\n")
+        file.write("================================================================\n\n")
 
         # Naming Errors
         if naming_errors:
             naming_error_count = len(naming_errors)
-            file.write(f"Naming Errors:\n")
-            file.write(f"{naming_error_count} files are having naming issues:\n")
+            file.write(f"NAMING ERRORS:\n\n")
+            file.write(f"{naming_error_count} file(s) is/are having naming issues, so skipping them from processing :\nNOTE: You should follow A_B* naming convention in filename where 'A' is id and 'B' is considered as name \n\n")
             for file_id, original_filename in naming_errors.items():
-                file.write(f"File ID: {file_id}, Filename: {original_filename}\n")
+                file.write(f"Filename: {original_filename}\n")
                 # Copy the file to the respective folder
+                naming_error_folder.mkdir(parents=True, exist_ok=True)
+                # making folder only when there is respective error.
                 try:
-                    original_file_path = pdf_dir / original_filename
+                    original_file_path = input_folder_path / original_filename
                     shutil.copy2(original_file_path, naming_error_folder / original_filename)
                 except Exception as e:
                     file.write(f"Error copying {original_filename} to NamingErrorFiles: {e}\n")
@@ -2232,13 +2313,15 @@ def write_errors_to_file(naming_errors, duplicate_file, id_mismatch, incomplete_
         # Duplicate Files
         if duplicate_file:
             duplicate_file_count = len(duplicate_file)
-            file.write(f"Duplicate Files:\n")
-            file.write(f"{duplicate_file_count} files are duplicates:\n")
+            file.write(f"DUPLICATE FILES:\n\n")
+            file.write(f"{duplicate_file_count} file(s) is/are duplicates, so skipping it from processing :\n\n")
             for file_id, original_filename in duplicate_file.items():
                 file.write(f"File ID: {file_id}, Filename: {original_filename}\n")
                 # Copy the file to the respective folder
+                duplicate_files_folder.mkdir(parents=True, exist_ok=True)
+                # making folder only when there is respective error.
                 try:
-                    original_file_path = pdf_dir / original_filename
+                    original_file_path = input_folder_path / original_filename
                     shutil.copy2(original_file_path, duplicate_files_folder / original_filename)
                 except Exception as e:
                     file.write(f"Error copying {original_filename} to DuplicateFiles: {e}\n")
@@ -2248,13 +2331,15 @@ def write_errors_to_file(naming_errors, duplicate_file, id_mismatch, incomplete_
         # ID Mismatch
         if id_mismatch:
             id_mismatch_count = len(id_mismatch)
-            file.write(f"ID Mismatch:\n")
-            file.write(f"{id_mismatch_count} files have ID mismatches:\n")
+            file.write(f"ID MISMATCH:\n\n")
+            file.write(f"{id_mismatch_count} file(s) have ID mismatches, still it's included in processing :\nThe id in file and in filename is not matching.\n\n")
             for file_id, original_filename in id_mismatch.items():
-                file.write(f"File ID: {file_id}, Filename: {original_filename}\n")
+                file.write(f"ID in File: {file_id}, Filename: {original_filename}\n")
                 # Copy the file to the respective folder
+                id_mismatch_folder.mkdir(parents=True, exist_ok=True)
+                # making folder only when there is respective error.
                 try:
-                    original_file_path = pdf_dir / original_filename
+                    original_file_path = input_folder_path / original_filename
                     shutil.copy2(original_file_path, id_mismatch_folder / original_filename)
                 except Exception as e:
                     file.write(f"Error copying {original_filename} to IdMismatchFiles: {e}\n")
@@ -2264,13 +2349,15 @@ def write_errors_to_file(naming_errors, duplicate_file, id_mismatch, incomplete_
         # Incomplete Data
         if incomplete_data:
             incomplete_data_count = len(incomplete_data)
-            file.write(f"Incomplete Data Files:\n")
-            file.write(f"{incomplete_data_count} files have incomplete data:\n")
+            file.write(f"INCOMPLETE DATA FILES:\n\n")
+            file.write(f"{incomplete_data_count} file(s) have incomplete data :\n\n")
             for file_id, filename in incomplete_data.items():
                 file.write(f"File ID: {file_id}, Filename: {filename}\n")
                 # Copy the file to the respective folder
+                incomplete_data_folder.mkdir(parents=True, exist_ok=True)
+                # making folder only when there is respective error.
                 try:
-                    original_file_path = pdf_dir / filename
+                    original_file_path = input_folder_path / filename
                     shutil.copy2(original_file_path, incomplete_data_folder / filename)
                 except Exception as e:
                     file.write(f"Error copying {filename} to IncompleteDataFiles: {e}\n")
@@ -2280,13 +2367,15 @@ def write_errors_to_file(naming_errors, duplicate_file, id_mismatch, incomplete_
         # Exception Files
         if exception_files:
             exception_file_count = len(exception_files)
-            file.write(f"Exception Files:\n")
-            file.write(f"{exception_file_count} files encountered errors:\n")
+            file.write(f"EXCEPTION FILES:\n\n")
+            file.write(f"{exception_file_count} file(s) encountered errors :\n\n")
             for filename, error_message in exception_files.items():
                 file.write(f"FileName: {filename}, Error: {error_message}\n")
                 # Copy the file to the respective folder
+                exception_files_folder.mkdir(parents=True, exist_ok=True)
+                # making folder only when there is respective error.
                 try:
-                    original_file_path = pdf_dir / filename
+                    original_file_path = input_folder_path / filename
                     shutil.copy2(original_file_path, exception_files_folder / filename)
                 except Exception as e:
                     file.write(f"Error copying {filename} to ExceptionFiles: {e}\n")
@@ -2318,10 +2407,10 @@ def show_warning_message(naming_errors, duplicate_file, id_mismatch, incomplete_
         tk.messagebox.showwarning("Errors in File Processing", warning_message)
 
 # Main function to handle all errors and generate the file
-def handle_all_errors(naming_errors, duplicate_file, id_mismatch, incomplete_data, exception_files, output_folder_path):
+def handle_all_errors(naming_errors, duplicate_file, id_mismatch, incomplete_data, exception_files, output_folder_path, input_folder_path):
     if naming_errors or duplicate_file or id_mismatch or incomplete_data or exception_files:
         # Write all errors to the error details file
-        write_errors_to_file(naming_errors, duplicate_file, id_mismatch, incomplete_data, exception_files, output_folder_path)
+        write_errors_to_file(naming_errors, duplicate_file, id_mismatch, incomplete_data, exception_files, output_folder_path, input_folder_path)
         # Show the warning message box with a consolidated summary of errors
         show_warning_message(naming_errors, duplicate_file, id_mismatch, incomplete_data, exception_files)
     else:

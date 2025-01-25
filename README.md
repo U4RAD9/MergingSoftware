@@ -28,4 +28,9 @@ I've fixed the following things as of 23rd September 2024 :
 1. I've created another function which takes input as all the merged files which means all files for a particular patient, where it first tells that which files are present for a particular patient, and than gives the data present in the files in the form of excel, named as generate_excel_for_merged_files.
 2. The respective button for above function is 'Generate Excel For Merged Files'.
 3. I've also changed the function which creates excel for the patients where as of now only xray, ecg , and pft excels were coming as output. Now, that will also have Audio, Opto, Vitals, Blood and Other Files(mostly dr. consultation).
+
+25 Jan 25:
+1. Ive made the function to count the tests and named as "Pateint's Test Count", where i gave another window popup to ask that whether they want to count for the merged file or for individual files.
+2. As of now, I've made the logic to count for merged files. Complete details i'll mention in documentation.
+3. I've made various handler functions to reduce the code redundancy and make it more optimal.
 -- Himanshu Jangid.
