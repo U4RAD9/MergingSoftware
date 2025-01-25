@@ -1720,6 +1720,9 @@ def count_of_tests_for_individual_patient():
     duplicate_file = {}
     id_mismatch = {}
 
+    # defining some unwanted phrases for later use.
+    unwanted_phrases = ["Referrer Dr.","left ear","RECORDERS & MEDICARE SYSTEMS","OPTOMETRY","ECG","VITALS","RBC Count","PDW *","PDW"]
+    
     # Excel Workbook Setup.
     wb = Workbook()
     ws = wb.active
@@ -1828,6 +1831,49 @@ def count_of_tests_for_individual_patient():
                         # print_page_text_for_logging(page_text)
 
                         # Check the text content for known modalities
+                        # For the xray report from stradus.
+                        if "Referrer Dr" in page_text and "Time" in page_text:
+                            # This will print text only when any modality matches.
+                            print_page_text_for_logging(page_text)
+                            modalities.add('XRAY')
+                            # Getting the keys that are having None value.
+                            missing_keys = [key for key, value in patient_details.items() if value is None]
+                            # If there are missing keys, extract data only for those keys
+                            if missing_keys:
+                                # Extracting data from the bot xray data extractor function .
+                                xray_data = extract_data_from_the_stradus_xray_file(page_text)
+                                print("Data extracted from the xray report.")
+                                # This will tell me the patient details when any field in it is empty.
+                                print(f"This is the patient details just before adding the extracted data in it, because some fields were empty in it :\n {patient_details}")
+                                # Updating only missing keys in patient_details
+                                for key in missing_keys:
+                                    if key in xray_data:
+                                        patient_details[key] = xray_data[key]
+                                # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
+                                print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
+
+                        # For the xray report from u4rad pacs reporting bot.
+                        if "Test Date:" in page_text and "Report Date:" in page_text and not any(phrase in page_text for phrase in unwanted_phrases):
+                            # This will print text only when any modality matches.
+                            print_page_text_for_logging(page_text)
+                            modalities.add('XRAY')
+                            # Getting the keys that are having None value.
+                            missing_keys = [key for key, value in patient_details.items() if value is None]
+                            # If there are missing keys, extract data only for those keys
+                            if missing_keys:
+                                # Extracting data from the bot xray data extractor function .
+                                xray_data = extract_data_from_the_u4rad_pacs_xray_file(page_text)
+                                print("Data extracted from the xray report.")
+                                # This will tell me the patient details when any field in it is empty.
+                                print(f"This is the patient details just before adding the extracted data in it, because some fields were empty in it :\n {patient_details}")
+                                # Updating only missing keys in patient_details
+                                for key in missing_keys:
+                                    if key in xray_data:
+                                        patient_details[key] = xray_data[key]
+                                # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
+                                print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
+
+                        # For the xray report from reporting bot.
                         if "X-RAY" in page_text:
                             # This will print text only when any modality matches.
                             print_page_text_for_logging(page_text)
@@ -1959,7 +2005,7 @@ def count_of_tests_for_individual_patient():
                                 # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
                                 print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
 
-                        elif "RBC Count" in page_text:
+                        elif "RBC Count" in page_text or "PDW *" in page_text or "PDW" in page_text :
                             # This will print text only when any modality matches.
                             print_page_text_for_logging(page_text)
                             print("This is a Blood Report.")
@@ -2147,7 +2193,7 @@ def extract_data_from_bot_ecg_file(pageText):
         print("Error extracting ECG data.")
     return patient_info
 
-# This is my function for extracting data from X-ray reports:
+# This is my function for extracting data from X-ray reports of our Reporting Bot:
 def extract_data_from_the_bot_xray_file(pageText):
     patient_info = {}
     try:
@@ -2175,6 +2221,47 @@ def extract_data_from_the_bot_xray_file(pageText):
             patient_info['report_date'] = str(pageText).split('Report date:')[1].split('X-RAY')[0].strip()
         # This i will use to clean up the findings of the data.
         # patient_info['findings'] = remove_illegal_characters(findings)
+    except IndexError:
+        print("Error extracting X-ray data.")
+    return patient_info
+
+# This is my function for extracting data from Stradus X-ray reports:
+def extract_data_from_the_stradus_xray_file(pageText):
+    patient_info = {}
+    try:
+        patient_info['patient_id'] = str(pageText).split('Patient ID')[1].split('Age')[0].strip()
+        patient_info['patient_name'] = str(pageText).split('Patient Name')[1].split('Patient ID')[0].strip()
+        patient_info['patient_age'] = 'Non-Extractable'
+        patient_info['gender'] = str(pageText).split('Sex')[1].split('Study Date')[0].strip()
+        patient_info['test_date'] = str(pageText).split('Study Date')[1].split('Report Date')[0].split('Time')[1].split('\n')[0].strip()
+        # It is really varying here, sometimes there is "impression:", sometimes "IMPRESSION", similarly for word "observations" , and sometimes these words are even not present there.
+        report_date_data = str(pageText).split('Report Date')[1].split('Dr.')[0]
+        # Considering the case when there is am in time.
+        if 'am' in report_date_data:
+            patient_info['report_date'] = str(pageText).split('Report Date')[1].split('am')[0].split('Time')[1].split('\n')[0].strip()
+        # Considering the case, when there is pm in time.
+        else:
+            patient_info['report_date'] = str(pageText).split('Report Date')[1].split('pm')[0].split('Time')[1].split('\n')[0].strip()
+        
+        # I will extract other data from here afterwards.
+        
+    except IndexError:
+        print("Error extracting X-ray data.")
+    return patient_info
+
+# This is my function for extracting data from our orthanc pacs X-ray reports:
+def extract_data_from_the_u4rad_pacs_xray_file(pageText):
+    patient_info = {}
+    try:
+        patient_info['patient_id'] = str(pageText).split('Patient ID:')[1].split('Patient Age:')[0].strip()
+        patient_info['patient_name'] = str(pageText).split('Patient Name:')[1].split('Patient ID:')[0].strip()
+        patient_info['patient_age'] = str(pageText).split('Patient Age:')[1].split('Patient Gender:')[0].strip()
+        patient_info['gender'] = str(pageText).split('Patient Gender:')[1].split('Test Date:')[0].strip()
+        patient_info['test_date'] = str(pageText).split('Test Date:')[1].split('Report Date:')[0].strip()
+        patient_info['report_date'] = str(pageText).split('Report Date:')[1].split('Dr.')[0].split('\n')[0].strip()
+        
+        # I will extract other data from here afterwards.
+        
     except IndexError:
         print("Error extracting X-ray data.")
     return patient_info

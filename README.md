@@ -33,4 +33,5 @@ I've fixed the following things as of 23rd September 2024 :
 1. Ive made the function to count the tests and named as "Pateint's Test Count", where i gave another window popup to ask that whether they want to count for the merged file or for individual files.
 2. As of now, I've made the logic to count for merged files. Complete details i'll mention in documentation.
 3. I've made various handler functions to reduce the code redundancy and make it more optimal.
+4. I've also included extraction and checking from stradus xray reports, also our u4rad pacs reports.
 -- Himanshu Jangid.
