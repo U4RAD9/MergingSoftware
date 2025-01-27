@@ -1724,7 +1724,8 @@ def count_of_tests_for_individual_patient():
     modalities = set()
 
     # Initializing a empty dictionary to just store the patient details every time any file is processed.
-    patient_details= {'patient_id': None,'patient_name': None,'patient_age': None,'gender': None,'test_date': None,'report_date': None}
+    patient_details = create_patient_details()
+    # patient_details= {'patient_id': None,'patient_name': None,'patient_age': None,'gender': None,'test_date': None,'report_date': None}
 
 
     # defining some unwanted phrases for later use.
@@ -1760,34 +1761,133 @@ def count_of_tests_for_individual_patient():
 
         # Looping through the list of PDF files if those are not merged yet.
         for pdf_file in pdf_files:
-            # Opening each PDF file in binary mode
-            with open(pdf_file, 'rb') as file:
-                # Create a PdfReader object
-                pdf_reader = PyPDF2.PdfReader(file)
+            # This will extract the unique key from the file names.
+            try:
+                original_filename = str(pdf_file).split("\\")[-1]
+                file_id = original_filename.split("_")[0].lower()
+                if "." in file_id:
+                    naming_errors[str(file)] = original_filename
+                    print(f"File {pdf_file} has incorrect naming format. Storing naming error: {original_filename}")
+                    # Skipping to the next file in the loop, even if there is any naming error also, this will make sure that operations team do thier work properly.
+                    continue
+                else:
+                    if file_id in keys:
+                        # setting the patient_details and modalities for the current file_id, which is already created.
+                        patient_details = patient_data[file_id]["patient_details"]
+                        modalities = patient_data[file_id]["modalities"]
+                    else:
+                        # Otherwise, adding the file_id to the keys set
+                        keys.add(file_id)
+                        # Creating a new patient details dictionary and an empty set for modalities
+                        patient_data[file_id] = {
+                            "patient_details": create_patient_details(),
+                            "modalities": set()
+                        }
+
+                        # setting the patient_details and modalities for the current file_id, this will be unique.
+                        patient_details = patient_data[file_id]["patient_details"]
+                        modalities = patient_data[file_id]["modalities"]
+
+            except IndexError:
+                original_filename = str(pdf_file).split("\\")[-1]
+                naming_errors[str(pdf_file)] = original_filename
+                print(f"File {pdf_file} has incorrect naming format. Storing naming error: {original_filename}")
+                # Skipping to the next file in the loop, even if there is any naming error also, this will make sure that operations team do thier work properly.
+                continue
+            print("Keys extracted from file names:", keys)
+            print("Naming errors:", naming_errors)
+
+            try:
+                # Opening each PDF file in binary mode
+                with open(pdf_file, 'rb') as file:
+                    # Creating a PdfReader object
+                    pdf_reader = PyPDF2.PdfReader(file)
+                    # Looping through each page in the PDF and save them as individual PDF files
+                    for page_number in range(len(pdf_reader.pages)):
+                        # Extract text data from the page to determine the modality
+                        page_text = pdf_reader.pages[page_number].extract_text()
+
+                        # Log the page text for debugging, this will print every page.
+                        # print_page_text_for_logging(page_text)
+
+                        # This function i've created will check all the conditions and based on that give us the required details.
+                        patient_details, modalities = extract_data_based_on_modality(page_text, patient_details, modalities)
+
+            except Exception as e:
+                print(f"Error processing {input_folder_path}: {str(e)}")
+                exception_files[str(input_folder_path)] = str(e)
+                continue  # Skip this file and continue with the next
         
-        
+        for file_id in keys:
+            # Now, checking that is there any "None" or empty value in the patient details, if yes , that means there is incomplete data in it.
+                missing_keys = [key for key, value in patient_data[file_id]["patient_details"].items() if value is None]
+                if missing_keys:
+                    incomplete_data[file_id] = original_filename
+                    print(f"Incomplete Data found in file id : {file_id} in File {pdf_file}, Please Review this file.")
+
+                # Checking if patient_id matches with the file_id
+                if patient_data[file_id]["patient_details"]['patient_id'] != file_id:
+                    id_extracted = patient_data[file_id]["patient_details"]['patient_id']
+                    id_mismatch[id_extracted] = original_filename
+                    print(f"Id in File : {pdf_file} and in it's filename is not matching, Please Review this file.")
+                # Now, I'll update the data in the patien_data dictionary so that i can simply use it to put it in the excel.
+                # After processing the pages of the current PDF file, just before moving to the next file:
+
+                # Updating patient_data from patient_details
+                for key in patient_data[file_id]["patient_details"]:
+                    patient_data[key] = patient_data[file_id]["patient_details"][key]
+                    # if patient_details[key] is not None:
+                    #     patient_data[key] = patient_details[key]
+
+                # Checking the modalities set and update corresponding fields in patient_data
+                for modality in patient_data[file_id]["modalities"]:
+                    if modality in patient_data:
+                        patient_data[modality] = 'Present'
+
+                # I'll further process these now, as of now , printing these for additional logs.
+                print(f"Patient data for {file_id}: {patient_data}")
+
+                # Clearing the modalities set and patient_details dictionary for the next file
+                patient_data[file_id]["modalities"].clear()
+                # Resetting values to None
+                for key in patient_data[file_id]["patient_details"]:
+                    patient_data[file_id]["patient_details"][key] = None
+
+                print(f"(This is the confirmation to empty patient_details dictionary :{patient_details})")
+
+                # Adding patient data to Excel
+                row = serial_no + 1  # Since row 1 is for headers, data starts from row 2
+                # Adding the serial number in the first column
+                ws.cell(row=row, column=1, value=serial_no)  
+
+                # Looping through patient_data dictionary and fill each cell in the current row
+                for col_num, (key, value) in enumerate(patient_data.items(), 2):  # starting from column 2
+                    cell = ws.cell(row=row, column=col_num, value=value)
+                    # Conditional coloring based on the value in the cell
+                    if value == "Present":
+                        # Green color for "Present"
+                        cell.fill = PatternFill(start_color="90EE90", end_color="90EE90", fill_type="solid")
+                    elif value == "None" or value == "Not Present":
+                        # Light Red color for "None" or "Not Present"
+                        cell.fill = PatternFill(start_color="FFCCCB", end_color="FFCCCB", fill_type="solid")
+
+                # Incrementing serial number for the next patient
+                serial_no += 1
+
+                # Resetting patient_data dictionary for the next iteration, i'll check afterwards whether it is needed or not.
+                # patient_data.clear()
+
+                # Saving the workbook after all data is processed
+                wb.save("patient_data.xlsx")
+
+                patient_data = creating_or_emptying_the_patient_data_dictionary()
+                print(f"This is also the confirmation that the main patient data dictioanary is also emptied : \n {patient_data}")
+
+
     elif selected_option == 2:
         # Logic for merged files
         print(f"Input Folder: {input_folder_path}")
         print(f"Output Folder: {output_folder_path}")
-
-        # still thinking where to include this logic , before the next code or inside ?????????????
-        # for file in pdf_files:
-        #     try:
-        #         original_filename = str(file).split("\\")[-1]
-        #         file_id = original_filename.split("_")[0].lower()
-        #         if "." in file_id:
-        #             naming_errors[str(file)] = original_filename
-        #             print(f"File {file} has incorrect naming format. Storing naming error: {original_filename}")
-        #         else:
-        #             keys.add(file_id)
-        #     except IndexError:
-        #         original_filename = str(file).split("\\")[-1]
-        #         naming_errors[str(file)] = original_filename
-        #         print(f"File {file} has incorrect naming format. Storing naming error: {original_filename}")
-
-        # print("Keys extracted from file names:", keys)
-        # print("Naming errors:", naming_errors)
 
         # Looping through the list of PDF files if those are already merged.
         for pdf_file in pdf_files:
@@ -1947,6 +2047,11 @@ def creating_or_emptying_the_patient_data_dictionary():
             'OTHERS': 'Not Present'
         }
     return patient_data
+
+# This function i have made to create the patient details dictionary when needed.
+def create_patient_details():
+    patient_details= {'patient_id': None,'patient_name': None,'patient_age': None,'gender': None,'test_date': None,'report_date': None}
+    return patient_details
 
 # This is to ask the user for the input and output path to reduce the code redundancy. - Himanshu.
 def select_folders():
