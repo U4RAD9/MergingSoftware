@@ -1720,8 +1720,19 @@ def count_of_tests_for_individual_patient():
     duplicate_file = {}
     id_mismatch = {}
 
+    # Making the modalities a set to store all the modalities for a particular id/key.
+    modalities = set()
+
+    # Initializing a empty dictionary to just store the patient details every time any file is processed.
+    patient_details= {'patient_id': None,'patient_name': None,'patient_age': None,'gender': None,'test_date': None,'report_date': None}
+
+
     # defining some unwanted phrases for later use.
-    unwanted_phrases = ["Referrer Dr.","left ear","RECORDERS & MEDICARE SYSTEMS","OPTOMETRY","ECG","VITALS","RBC Count","PDW *","PDW"]
+    # i've defined in the conditional function, so i might not require here now.
+    # unwanted_phrases = ["Referrer Dr.","left ear","RECORDERS & MEDICARE SYSTEMS","OPTOMETRY","ECG","VITALS","RBC Count","PDW *","PDW"]
+
+    # Initializing the patient_data dictionary before looping through each and every file so that i can use it to fill the excel.
+    patient_data = creating_or_emptying_the_patient_data_dictionary()
     
     # Excel Workbook Setup.
     wb = Workbook()
@@ -1778,9 +1789,6 @@ def count_of_tests_for_individual_patient():
         # print("Keys extracted from file names:", keys)
         # print("Naming errors:", naming_errors)
 
-        # Initializing the patient_data dictionary before looping through each and every file so that i can use it to fill the excel.
-        patient_data = creating_or_emptying_the_patient_data_dictionary()
-
         # Looping through the list of PDF files if those are already merged.
         for pdf_file in pdf_files:
             # This will extract the unique key from the file names.
@@ -1811,12 +1819,6 @@ def count_of_tests_for_individual_patient():
             print("Keys extracted from file names:", keys)
             print("Naming errors:", naming_errors)
 
-            # Making the modalities a set to store all the modalities for a particular id/key.
-            modalities = set()
-
-            # Initializing a empty dictionary to just store the patient details every time any file is processed.
-            patient_details= {'patient_id': None,'patient_name': None,'patient_age': None,'gender': None,'test_date': None,'report_date': None}
-
             try:
                 # Opening each PDF file in binary mode
                 with open(pdf_file, 'rb') as file:
@@ -1830,203 +1832,8 @@ def count_of_tests_for_individual_patient():
                         # Log the page text for debugging, this will print every page.
                         # print_page_text_for_logging(page_text)
 
-                        # Check the text content for known modalities
-                        # For the xray report from stradus.
-                        if "Referrer Dr" in page_text and "Time" in page_text:
-                            # This will print text only when any modality matches.
-                            print_page_text_for_logging(page_text)
-                            modalities.add('XRAY')
-                            # Getting the keys that are having None value.
-                            missing_keys = [key for key, value in patient_details.items() if value is None]
-                            # If there are missing keys, extract data only for those keys
-                            if missing_keys:
-                                # Extracting data from the bot xray data extractor function .
-                                xray_data = extract_data_from_the_stradus_xray_file(page_text)
-                                print("Data extracted from the xray report.")
-                                # This will tell me the patient details when any field in it is empty.
-                                print(f"This is the patient details just before adding the extracted data in it, because some fields were empty in it :\n {patient_details}")
-                                # Updating only missing keys in patient_details
-                                for key in missing_keys:
-                                    if key in xray_data:
-                                        patient_details[key] = xray_data[key]
-                                # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
-                                print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
-
-                        # For the xray report from u4rad pacs reporting bot.
-                        if "Test Date:" in page_text and "Report Date:" in page_text and not any(phrase in page_text for phrase in unwanted_phrases):
-                            # This will print text only when any modality matches.
-                            print_page_text_for_logging(page_text)
-                            modalities.add('XRAY')
-                            # Getting the keys that are having None value.
-                            missing_keys = [key for key, value in patient_details.items() if value is None]
-                            # If there are missing keys, extract data only for those keys
-                            if missing_keys:
-                                # Extracting data from the bot xray data extractor function .
-                                xray_data = extract_data_from_the_u4rad_pacs_xray_file(page_text)
-                                print("Data extracted from the xray report.")
-                                # This will tell me the patient details when any field in it is empty.
-                                print(f"This is the patient details just before adding the extracted data in it, because some fields were empty in it :\n {patient_details}")
-                                # Updating only missing keys in patient_details
-                                for key in missing_keys:
-                                    if key in xray_data:
-                                        patient_details[key] = xray_data[key]
-                                # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
-                                print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
-
-                        # For the xray report from reporting bot.
-                        if "X-RAY" in page_text:
-                            # This will print text only when any modality matches.
-                            print_page_text_for_logging(page_text)
-                            modalities.add('XRAY')
-                            # Getting the keys that are having None value.
-                            missing_keys = [key for key, value in patient_details.items() if value is None]
-                            # If there are missing keys, extract data only for those keys
-                            if missing_keys:
-                                # Extracting data from the bot xray data extractor function .
-                                xray_data = extract_data_from_the_bot_xray_file(page_text)
-                                print("Data extracted from the xray report.")
-                                # This will tell me the patient details when any field in it is empty.
-                                print(f"This is the patient details just before adding the extracted data in it, because some fields were empty in it :\n {patient_details}")
-                                # Updating only missing keys in patient_details
-                                for key in missing_keys:
-                                    if key in xray_data:
-                                        patient_details[key] = xray_data[key]
-                                # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
-                                print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
-
-                        elif "RECORDERS & MEDICARE SYSTEMS" in page_text:
-                            # This will print text only when any modality matches.
-                            print_page_text_for_logging(page_text)
-                            print("This is a PFT file.")
-                            modalities.add('PFT')
-                            # Getting the keys that are having None value.
-                            missing_keys = [key for key, value in patient_details.items() if value is None]
-                            # If there are missing keys, extract data only for those keys
-                            if missing_keys:
-                                # Extracting data from the bot xray data extractor function .
-                                xray_data = extract_data_from_bot_pft_file(page_text)
-                                print("Data extracted from the pft report.")
-                                # This will tell me the patient details when any field in it is empty.
-                                print(f"This is the patient details just before adding the extracted data in it, because some fields were empty in it :\n {patient_details}")
-                                # Updating only missing keys in patient_details
-                                for key in missing_keys:
-                                    if key in xray_data:
-                                        patient_details[key] = xray_data[key]
-                                # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
-                                print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
-
-                        elif "OPTOMETRY" in page_text:
-                            # This will print text only when any modality matches.
-                            print_page_text_for_logging(page_text)
-                            print("This is an Optometry file.")
-                            modalities.add('OPTOMETRY')
-                            # Getting the keys that are having None value.
-                            missing_keys = [key for key, value in patient_details.items() if value is None]
-                            # If there are missing keys, extract data only for those keys
-                            if missing_keys:
-                                # Extracting data from the bot xray data extractor function .
-                                xray_data = extract_data_from_bot_opto_file(page_text)
-                                print("Data extracted from the optometry report.")
-                                # This will tell me the patient details when any field in it is empty.
-                                print(f"This is the patient details just before adding the extracted data in it, because some fields were empty in it :\n {patient_details}")
-                                # Updating only missing keys in patient_details
-                                for key in missing_keys:
-                                    if key in xray_data:
-                                        patient_details[key] = xray_data[key]
-                                # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
-                                print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
-
-                        elif "left ear" in page_text:
-                            # This will print text only when any modality matches.
-                            print_page_text_for_logging(page_text)
-                            print("This is an Audiometry file.")
-                            modalities.add('AUDIOMETRY')
-                            # Getting the keys that are having None value.
-                            missing_keys = [key for key, value in patient_details.items() if value is None]
-                            # If there are missing keys, extract data only for those keys
-                            if missing_keys:
-                                # Extracting data from the bot xray data extractor function .
-                                xray_data = extract_data_from_bot_audio_file(page_text)
-                                print("Data extracted from the audiometry report.")
-                                # This will tell me the patient details when any field in it is empty.
-                                print(f"This is the patient details just before adding the extracted data in it, because some fields were empty in it :\n {patient_details}")
-                                # Updating only missing keys in patient_details
-                                for key in missing_keys:
-                                    if key in xray_data:
-                                        patient_details[key] = xray_data[key]
-                                # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
-                                print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
-
-                        elif "ECG" in page_text:
-                            # This will print text only when any modality matches.
-                            print_page_text_for_logging(page_text)
-                            print("This is an ECG file.")
-                            modalities.add('ECG')
-                            # Getting the keys that are having None value.
-                            missing_keys = [key for key, value in patient_details.items() if value is None]
-                            # If there are missing keys, extract data only for those keys
-                            if missing_keys:
-                                # Extracting data from the bot xray data extractor function .
-                                xray_data = extract_data_from_bot_ecg_file(page_text)
-                                print("Data extracted from the ecg report.")
-                                # This will tell me the patient details when any field in it is empty.
-                                print(f"This is the patient details just before adding the extracted data in it, because some fields were empty in it :\n {patient_details}")
-                                # Updating only missing keys in patient_details
-                                for key in missing_keys:
-                                    if key in xray_data:
-                                        patient_details[key] = xray_data[key]
-                                # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
-                                print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
-
-                        elif page_text == '':
-                            # This will print text only when any modality matches.
-                            print_page_text_for_logging(page_text)
-                            print("This is an Others image.")
-                            print("Since it is an others file, means the page is blank, No data to extract.")
-                            modalities.add('OTHERS')
-                        elif "VITALS" in page_text:
-                            # This will print text only when any modality matches.
-                            print_page_text_for_logging(page_text)
-                            print("This is a Vitals file.")
-                            modalities.add('VITALS')
-                            # Getting the keys that are having None value.
-                            missing_keys = [key for key, value in patient_details.items() if value is None]
-                            # If there are missing keys, extract data only for those keys
-                            if missing_keys:
-                                # Extracting data from the bot xray data extractor function .
-                                xray_data = extract_data_from_bot_vitals_file(page_text)
-                                print("Data extracted from the vitals report.")
-                                # This will tell me the patient details when any field in it is empty.
-                                print(f"This is the patient details just before adding the extracted data in it, because some fields were empty in it :\n {patient_details}")
-                                # Updating only missing keys in patient_details
-                                for key in missing_keys:
-                                    if key in xray_data:
-                                        patient_details[key] = xray_data[key]
-                                # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
-                                print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
-
-                        elif "RBC Count" in page_text or "PDW *" in page_text or "PDW" in page_text :
-                            # This will print text only when any modality matches.
-                            print_page_text_for_logging(page_text)
-                            print("This is a Blood Report.")
-                            modalities.add('PATHOLOGY')
-                            # Getting the keys that are having None value.
-                            missing_keys = [key for key, value in patient_details.items() if value is None]
-                            # If there are missing keys, extract data only for those keys
-                            if missing_keys:
-                                # Extracting data from the bot xray data extractor function .
-                                xray_data = extract_data_from_the_redcliffe_patho_file(page_text)
-                                print("Data extracted from the pathology report.")
-                                # This will tell me the patient details when any field in it is empty.
-                                print(f"This is the patient details just before adding the extracted data in it, because some fields were empty in it :\n {patient_details}")
-                                # Updating only missing keys in patient_details
-                                for key in missing_keys:
-                                    if key in xray_data:
-                                        patient_details[key] = xray_data[key]
-                                # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
-                                print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
-
-                        # Only the above conditions will tell that whether it is a particular test or not, if others are needed , I'll update them here.
+                        # This function i've created will check all the conditions and based on that give us the required details.
+                        patient_details, modalities = extract_data_based_on_modality(page_text, patient_details, modalities)
 
                 # Now, checking that is there any "None" or empty value in the patient details, if yes , that means there is incomplete data in it.
                 missing_keys = [key for key, value in patient_details.items() if value is None]
@@ -2156,6 +1963,169 @@ def select_folders():
         return None, None
 
     return input_folder_path, output_folder_path
+
+# This function i've created to get the data based on each and every modality.(More optimised way.)
+def extract_missing_data_for_modality(modality, page_text, patient_details):
+    """
+    Extract missing data for the given modality and update the patient details.
+    """
+    missing_keys = [key for key, value in patient_details.items() if value is None]
+    
+    if missing_keys:
+        # Mapping modalities to their corresponding extraction functions
+        modality_functions = {
+            'XRAY-BOT': extract_data_from_the_bot_xray_file,
+            'XRAY-STRADUS': extract_data_from_the_stradus_xray_file,
+            'XRAY-U4RAD-PACS': extract_data_from_the_u4rad_pacs_xray_file,
+            'PFT': extract_data_from_bot_pft_file,
+            'OPTOMETRY': extract_data_from_bot_opto_file,
+            'AUDIOMETRY': extract_data_from_bot_audio_file,
+            'ECG': extract_data_from_bot_ecg_file,
+            'VITALS': extract_data_from_bot_vitals_file,
+            'PATHOLOGY': extract_data_from_the_redcliffe_patho_file
+        }
+
+        # This is to Check if the modality exists in the dictionary and extract the data
+        # This will check the respective key(which is the modality here, which i pass while calling the function.)
+        # The key takeaway is the modality i pass and the modality i add in the set can be different, so i can map these different functions like 
+        # Extracting the data from the stradus / our pacs report etc. the function will set the modality_data as an empty dictionary, when no modality is found, so i can handle any part here now.
+        # More details if needed than see in my documentation or search on web.
+        modality_data = modality_functions.get(modality, lambda x: {}) (page_text)
+        
+        # Logging the extraction message
+        if modality_data:
+            # This will tell me the patient details when any field in it is empty.
+            print(f"This is the patient details just before adding the extracted data in it, because some fields were empty in it :\n {patient_details}")
+            print(f"Data extracted from the {modality} report.")
+        
+        # Updating patient details with the extracted data
+        for key in missing_keys:
+            if key in modality_data:
+                patient_details[key] = modality_data[key]
+
+    return patient_details
+
+# This function i've created to check or get the data based on conditions.
+def extract_data_based_on_modality(page_text, patient_details, modalities):
+    """
+    Function to check for different modalities in the page_text, 
+    extract missing data, and update patient details accordingly.
+    
+    Parameters:
+    - page_text (str): Text extracted from the page
+    - patient_details (dict): A dictionary containing patient details
+    - modalities (set): A set to store the modalities found
+    
+    Returns:
+    - updated_patient_details (dict): The updated patient details with newly extracted data
+    - updated_modalities (set): The updated set of modalities found
+    """
+    # Define unwanted phrases
+    unwanted_phrases = ["Referrer Dr.", "left ear", "RECORDERS & MEDICARE SYSTEMS", 
+                        "OPTOMETRY", "ECG", "VITALS", "RBC Count", "PDW *", "PDW"]
+
+    # Check the text content for known modalities
+    # For the xray report from stradus.
+    if "Referrer Dr" in page_text and "Time" in page_text:
+        # This will print text only when any modality matches.
+        print_page_text_for_logging(page_text)
+        modalities.add('XRAY')
+        # Calling the data extractor function i've created wrt each conditional expectation.
+        patient_details = extract_missing_data_for_modality('XRAY-STRADUS', page_text, patient_details)
+        # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
+        print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
+
+    # For the xray report from u4rad pacs reporting bot.
+    if "Test Date:" in page_text and "Report Date:" in page_text and not any(phrase in page_text for phrase in unwanted_phrases):
+        # This will print text only when any modality matches.
+        print_page_text_for_logging(page_text)
+        modalities.add('XRAY')
+        # Calling the data extractor function i've created wrt each conditional expectation.
+        patient_details = extract_missing_data_for_modality('XRAY-U4RAD-PACS', page_text, patient_details)
+        # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
+        print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
+
+    # For the xray report from reporting bot.
+    if "X-RAY" in page_text:
+        # This will print text only when any modality matches.
+        print_page_text_for_logging(page_text)
+        modalities.add('XRAY')
+        # Calling the data extractor function i've created wrt each conditional expectation.
+        patient_details = extract_missing_data_for_modality('XRAY-BOT', page_text, patient_details)
+        # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
+        print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
+
+    elif "RECORDERS & MEDICARE SYSTEMS" in page_text:
+        # This will print text only when any modality matches.
+        print_page_text_for_logging(page_text)
+        print("This is a PFT file.")
+        modalities.add('PFT')
+        # Calling the data extractor function i've created wrt each conditional expectation.
+        patient_details = extract_missing_data_for_modality('PFT', page_text, patient_details)
+        # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
+        print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
+
+    elif "OPTOMETRY" in page_text:
+        # This will print text only when any modality matches.
+        print_page_text_for_logging(page_text)
+        print("This is an Optometry file.")
+        modalities.add('OPTOMETRY')
+        # Calling the data extractor function i've created wrt each conditional expectation.
+        patient_details = extract_missing_data_for_modality('OPTOMETRY', page_text, patient_details)
+        # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
+        print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
+
+    elif "left ear" in page_text:
+        # This will print text only when any modality matches.
+        print_page_text_for_logging(page_text)
+        print("This is an Audiometry file.")
+        modalities.add('AUDIOMETRY')
+        # Calling the data extractor function i've created wrt each conditional expectation.
+        patient_details = extract_missing_data_for_modality('AUDIOMETRY', page_text, patient_details)
+        # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
+        print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
+
+    elif "ECG" in page_text:
+        # This will print text only when any modality matches.
+        print_page_text_for_logging(page_text)
+        print("This is an ECG file.")
+        modalities.add('ECG')
+        # Calling the data extractor function i've created wrt each conditional expectation.
+        patient_details = extract_missing_data_for_modality('ECG', page_text, patient_details)
+        # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
+        print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
+
+    elif page_text == '':
+        # This will print text only when any modality matches.
+        print_page_text_for_logging(page_text)
+        print("This is an Others image.")
+        print("Since it is an others file, means the page is blank, No data to extract.")
+        modalities.add('OTHERS')
+    elif "VITALS" in page_text:
+        # This will print text only when any modality matches.
+        print_page_text_for_logging(page_text)
+        print("This is a Vitals file.")
+        modalities.add('VITALS')
+        # Calling the data extractor function i've created wrt each conditional expectation.
+        patient_details = extract_missing_data_for_modality('VITALS', page_text, patient_details)
+        # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
+        print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
+
+    elif "RBC Count" in page_text or "PDW *" in page_text or "PDW" in page_text :
+        # This will print text only when any modality matches.
+        print_page_text_for_logging(page_text)
+        print("This is a Blood Report.")
+        modalities.add('PATHOLOGY')
+        # Calling the data extractor function i've created wrt each conditional expectation.
+        patient_details = extract_missing_data_for_modality('PATHOLOGY', page_text, patient_details)
+        # Additional logging to see the patient details extracted so far, and it will give the patient details only if some thing is missing or empty.
+        print(f"This is the patient details after adding the data which we extracted and because the details were not completely filled before :\n {patient_details}")
+
+    # Only the above conditions will tell that whether it is a particular test or not, if others are needed , I'll update them here.
+
+
+    return patient_details, modalities
+
 
 # This is my function to extract data from all the pft files :
 def extract_data_from_bot_pft_file(pageText):
