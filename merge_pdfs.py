@@ -1813,75 +1813,88 @@ def count_of_tests_for_individual_patient():
                         # This function i've created will check all the conditions and based on that give us the required details.
                         patient_details, modalities = extract_data_based_on_modality(page_text, patient_details, modalities)
 
+                        # Checking if patient_id matches with the file_id
+                        if patient_details['patient_id'] != None:
+                            if patient_details['patient_id'] != file_id:
+                                id_extracted = patient_details['patient_id']
+                                id_mismatch[id_extracted] = original_filename
+                                print(f"Id in File : {pdf_file} and in it's filename is not matching, Please Review this file.")
+
+                        # Update the patient_data dictionary for this file_id
+                        patient_data[file_id]["patient_details"] = patient_details
+                        patient_data[file_id]["modalities"] = modalities
+
             except Exception as e:
                 print(f"Error processing {input_folder_path}: {str(e)}")
                 exception_files[str(input_folder_path)] = str(e)
                 continue  # Skip this file and continue with the next
         
         for file_id in keys:
+            # setting the patient_details and modalities for the current file_id, which is already created.
+            patient_details = patient_data[file_id]["patient_details"]
+            modalities = patient_data[file_id]["modalities"]
             # Now, checking that is there any "None" or empty value in the patient details, if yes , that means there is incomplete data in it.
-                missing_keys = [key for key, value in patient_data[file_id]["patient_details"].items() if value is None]
-                if missing_keys:
-                    incomplete_data[file_id] = original_filename
-                    print(f"Incomplete Data found in file id : {file_id} in File {pdf_file}, Please Review this file.")
+            missing_keys = [key for key, value in patient_details.items() if value is None]
+            if missing_keys:
+                incomplete_data[file_id] = original_filename
+                print(f"Incomplete Data found in file id : {file_id} in File {pdf_file}, Please Review this file.")
 
-                # Checking if patient_id matches with the file_id
-                if patient_data[file_id]["patient_details"]['patient_id'] != file_id:
-                    id_extracted = patient_data[file_id]["patient_details"]['patient_id']
-                    id_mismatch[id_extracted] = original_filename
-                    print(f"Id in File : {pdf_file} and in it's filename is not matching, Please Review this file.")
-                # Now, I'll update the data in the patien_data dictionary so that i can simply use it to put it in the excel.
-                # After processing the pages of the current PDF file, just before moving to the next file:
+            # Now, I'll update the data in the patien_data dictionary so that i can simply use it to put it in the excel.
+            # After processing the pages of the current PDF file, just before moving to the next file:
 
-                # Updating patient_data from patient_details
-                for key in patient_data[file_id]["patient_details"]:
-                    patient_data[key] = patient_data[file_id]["patient_details"][key]
-                    # if patient_details[key] is not None:
-                    #     patient_data[key] = patient_details[key]
+            # creating the unique patient data for each file so that i can use that instead of the globally available thing.
+            each_person_patient_data = creating_or_emptying_the_patient_data_dictionary()
+            # Updating patient_data from patient_details
+            for key in patient_details:
+                each_person_patient_data[key] = patient_details[key]
+                # if patient_details[key] is not None:
+                #     patient_data[key] = patient_details[key]
 
-                # Checking the modalities set and update corresponding fields in patient_data
-                for modality in patient_data[file_id]["modalities"]:
-                    if modality in patient_data:
-                        patient_data[modality] = 'Present'
+            # i have to update the original_filename here for each file id.
+            # Checking the modalities set and update corresponding fields in patient_data
+            for modality in modalities:
+                if modality in patient_data:
+                    each_person_patient_data[modality] = 'Present'
 
-                # I'll further process these now, as of now , printing these for additional logs.
-                print(f"Patient data for {file_id}: {patient_data}")
+            # I'll further process these now, as of now , printing these for additional logs.
+            print(f"Patient data for {file_id}: {each_person_patient_data}")
+            
+            # These things are not needed because these will be automatically handled by the python garbage collector.
+            # Clearing the modalities set and patient_details dictionary for the next file
+            # patient_data[file_id]["modalities"].clear()
+            # # Resetting values to None
+            # for key in patient_data[file_id]["patient_details"]:
+            #     patient_data[file_id]["patient_details"][key] = None
 
-                # Clearing the modalities set and patient_details dictionary for the next file
-                patient_data[file_id]["modalities"].clear()
-                # Resetting values to None
-                for key in patient_data[file_id]["patient_details"]:
-                    patient_data[file_id]["patient_details"][key] = None
+            # print(f"(This is the confirmation to empty each patient_details dictionary :{patient_data[file_id]["patient_details"]})")
 
-                print(f"(This is the confirmation to empty patient_details dictionary :{patient_details})")
+            # Adding patient data to Excel
+            row = serial_no + 1  # Since row 1 is for headers, data starts from row 2
+            # Adding the serial number in the first column
+            ws.cell(row=row, column=1, value=serial_no)  
 
-                # Adding patient data to Excel
-                row = serial_no + 1  # Since row 1 is for headers, data starts from row 2
-                # Adding the serial number in the first column
-                ws.cell(row=row, column=1, value=serial_no)  
+            # Looping through patient_data dictionary and fill each cell in the current row
+            for col_num, (key, value) in enumerate(each_person_patient_data.items(), 2):  # starting from column 2
+                cell = ws.cell(row=row, column=col_num, value=value)
+                # Conditional coloring based on the value in the cell
+                if value == "Present":
+                    # Green color for "Present"
+                    cell.fill = PatternFill(start_color="90EE90", end_color="90EE90", fill_type="solid")
+                elif value == "None" or value == "Not Present":
+                    # Light Red color for "None" or "Not Present"
+                    cell.fill = PatternFill(start_color="FFCCCB", end_color="FFCCCB", fill_type="solid")
 
-                # Looping through patient_data dictionary and fill each cell in the current row
-                for col_num, (key, value) in enumerate(patient_data.items(), 2):  # starting from column 2
-                    cell = ws.cell(row=row, column=col_num, value=value)
-                    # Conditional coloring based on the value in the cell
-                    if value == "Present":
-                        # Green color for "Present"
-                        cell.fill = PatternFill(start_color="90EE90", end_color="90EE90", fill_type="solid")
-                    elif value == "None" or value == "Not Present":
-                        # Light Red color for "None" or "Not Present"
-                        cell.fill = PatternFill(start_color="FFCCCB", end_color="FFCCCB", fill_type="solid")
+            # Incrementing serial number for the next patient
+            serial_no += 1
 
-                # Incrementing serial number for the next patient
-                serial_no += 1
+            # Resetting patient_data dictionary for the next iteration, i'll check afterwards whether it is needed or not.
+            # patient_data.clear()
 
-                # Resetting patient_data dictionary for the next iteration, i'll check afterwards whether it is needed or not.
-                # patient_data.clear()
-
-                # Saving the workbook after all data is processed
-                wb.save("patient_data.xlsx")
-
-                patient_data = creating_or_emptying_the_patient_data_dictionary()
-                print(f"This is also the confirmation that the main patient data dictioanary is also emptied : \n {patient_data}")
+            # Saving the workbook after all data is processed
+            wb.save("patient_data.xlsx")
+            # It's not needed i guess.
+            # patient_data = creating_or_emptying_the_patient_data_dictionary()
+            # print(f"This is also the confirmation that the main patient data dictioanary is also emptied : \n {patient_data}")
 
 
     elif selected_option == 2:
@@ -2005,6 +2018,7 @@ def count_of_tests_for_individual_patient():
                 exception_files[str(input_folder_path)] = str(e)
                 continue  # Skip this file and continue with the next
 
+    # This will be done for both the selections.
     # Save the workbook to the output directory
     output_filename = "Patient_Test_Details.xlsx"
     output_file_path = Path(output_folder_path) / output_filename
