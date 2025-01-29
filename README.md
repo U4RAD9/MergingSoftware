@@ -34,4 +34,10 @@ I've fixed the following things as of 23rd September 2024 :
 2. As of now, I've made the logic to count for merged files. Complete details i'll mention in documentation.
 3. I've made various handler functions to reduce the code redundancy and make it more optimal.
 4. I've also included extraction and checking from stradus xray reports, also our u4rad pacs reports.
+
+28 Jan 25:
+1. I've also completed the first option in the pateint's test count i.e. for individual files, Key thing to remember here is that i've created a unique patient data instead of using the global patient data dictionary was creating some issues.
+
+29 Jan 25:
+1. 
 -- Himanshu Jangid.

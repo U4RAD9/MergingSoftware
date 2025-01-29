@@ -1031,7 +1031,96 @@ def generate_excel_for_individual_files():
 
 # This is another function which reads the MERGED files one by one, and then tells for a patient, which files are present respectively, along with the data. - HIMANSHU.
 def generate_excel_for_merged_files():
-    messagebox.showwarning("Excel Data for All Individual Merged Files", "This is the Generate Excel Function for the Merged Files.")
+    # Call select_folders to get both input and output folder paths
+    input_folder_path, output_folder_path = select_folders()
+    if not input_folder_path or not output_folder_path:
+        return
+    # This will give me a list of only pdf files as the glob will only give me these, and then it will store them each in the list in the form of Path Object.
+    pdf_files = list(Path(input_folder_path).glob("*.pdf"))
+    print(pdf_files)
+    # Getting the no. of files that i've processed.
+    num_files_processed = len(pdf_files)
+    # Later, i will convert the path object in the binary format so that i can read it using our reader and manipulate my data accordingly.
+
+    # Collecting keys from the file names (extracted from the first part of the filename before the underscore)
+    # I will use these in case if in any file the id is missing for that unique patient.
+    keys = set()
+    naming_errors = {}
+    exception_files = {}
+    incomplete_data = {}
+    duplicate_file = {}
+    id_mismatch = {}
+    # Set to store modalities encountered for each unique file_id
+    unique_file_id_set = {}
+
+    # Making the modalities a set to store all the modalities for a particular id/key.
+    modalities = set()
+
+    # Initializing a empty dictionary to just store the patient details every time any file is processed.
+    patient_details = create_patient_details()
+
+    # Logic for merged files
+    print(f"Input Folder: {input_folder_path}")
+    print(f"Output Folder: {output_folder_path}")
+
+    # Looping through the list of PDF files if those are already merged.
+    for pdf_file in pdf_files:
+        # This will extract the unique key from the file names.
+        try:
+            original_filename = str(pdf_file).split("\\")[-1]
+            file_id = original_filename.split("_")[0].lower()
+            if "." in file_id:
+                naming_errors[str(file)] = original_filename
+                print(f"File {pdf_file} has incorrect naming format. Storing naming error: {original_filename}")
+                # Skipping to the next file in the loop, even if there is any naming error also, this will make sure that operations team do thier work properly.
+                continue
+            else:
+                if file_id in keys:
+                    # If file_id is already in the keys set, add it to the duplicate_file dictionary
+                    duplicate_file[file_id] = original_filename
+                    print(f"Duplicate file id : {file_id} found in File {pdf_file}, Skipping this file.")
+                    # Skipping to the next file in the loop
+                    continue
+                else:
+                    # Otherwise, adding the file_id to the keys set
+                    keys.add(file_id)
+        except IndexError:
+            original_filename = str(pdf_file).split("\\")[-1]
+            naming_errors[str(pdf_file)] = original_filename
+            print(f"File {pdf_file} has incorrect naming format. Storing naming error: {original_filename}")
+            # Skipping to the next file in the loop, even if there is any naming error also, this will make sure that operations team do thier work properly.
+            continue
+        print("Keys extracted from file names:", keys)
+        print("Naming errors:", naming_errors)
+
+        try:
+            # Opening each PDF file in binary mode
+            with open(pdf_file, 'rb') as file:
+                # Creating a PdfReader object
+                pdf_reader = PyPDF2.PdfReader(file)
+                # Looping through each page in the PDF and save them as individual PDF files
+                for page_number in range(len(pdf_reader.pages)):
+                    # Extract text data from the page to determine the modality
+                    page_text = pdf_reader.pages[page_number].extract_text()
+
+                    # Log the page text for debugging, this will print every page.
+                    # print_page_text_for_logging(page_text)
+
+                    # This function i've created will check all the conditions and based on that give us the required details.
+                    patient_details, modalities = extract_data_based_on_modality(page_text, patient_details, modalities)
+
+                    for modality in modalities:
+                        if modality not in unique_file_id_set:
+                            # If this modality has not been processed for this file_id
+                            print(f"Processing modality {modality} for file_id {file_id}")
+                            # Add the modality to the unique set for this file_id
+                            unique_file_id_set.add(modality)
+                            # Call the modality based excel function to get the workbook for that modality
+                            wb, serial_no, respective_patient_data = modality_based_excel_workbook(modality)
+                            serial_no = wb.max_row + 1
+                    
+                    # Clearing the modalities set when work is done.
+                    modalities.clear()
 
 # This is the sample code to make a separate window to ask questions regarding which option our user wants to chose , 
 # I'll use this afterwards.
@@ -1646,6 +1735,11 @@ def split_patient_file():
     else:
         print("Input directory not selected.")
 
+# This is my another function which gives me the respective data i.e. excel sheet for each test.
+# Ex. appending all the optometry patients list in the excel along with the report findings, and similarly others.
+def generate_patient_report_excel():
+    return 'Himanshu is working on it'
+
 # This is my new function which will just give me the count or tell me whether what test's are done for a particular patient. - Himanshu.
 def count_of_tests_for_individual_patient():
     # As of now , i am not able to use a simple dialogbox to make the user select option from my window directly.
@@ -2123,6 +2217,81 @@ def extract_missing_data_for_modality(modality, page_text, patient_details):
                 patient_details[key] = modality_data[key]
 
     return patient_details
+
+from openpyxl import Workbook
+from openpyxl.styles import Font
+
+def modality_based_excel_workbook(modality):
+    # Headers for each modality
+    headers = {
+        'XRAY': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'FINDINGS'],
+        'PFT': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'HEIGHT', 'WEIGHT', 'OBSERVATIONS'],
+        'OPTOMETRY': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'FAR VISION RIGHT', 'NEAR VISION RIGHT', 'SPHERICAL RIGHT', 'CYLINDRICAL RIGHT', 'AXIS RIGHT', 'ADD RIGHT',
+                      'FAR VISION LEFT', 'NEAR VISION LEFT', 'SPHERICAL LEFT', 'CYLINDRICAL LEFT', 'AXIS LEFT', 'ADD LEFT', 'COLOUR BLINDNESS'],
+        'AUDIOMETRY': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'LEFT EAR FINDING', 'RIGHT EAR FINDING'],
+        'ECG': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'HEART RATE', 'FINDINGS'],
+        'VITALS': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'HEIGHT', 'WEIGHT', 'BLOOD PRESSURE', 'PULSE'],
+        'PATHOLOGY': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'HAEMOGLOBIN', 'RBC COUNT', 'PCV', 'MCV', 'MCH', 'MCHC', 'RDW (CV)', 'RDW-SD',
+                      'TLC', 'NEUTROPHILS (DLC)', 'LYMPHOCYTES (DLC)', 'MONOCYTES (DLC)', 'EOSINOPHILS (DLC)', 'BASOPHILS (DLC)', 'NEUTROPHILS (ALC)', 'LYMPHOCYTES (ALC)', 'MONOCYTES (ALC)', 
+                      'EOSINOPHILS (ALC)', 'BASOPHILS (ALC)', 'PLATELET COUNT', 'MPV', 'PCT']
+    }
+    # Creating workbook for each type of modality
+    xray_Workbook = Workbook()
+    pft_Workbook = Workbook()
+    opto_Workbook = Workbook()
+    audio_Workbook = Workbook()
+    ecg_Workbook = Workbook()
+    vitals_Workbook = Workbook()
+    patho_Workbook = Workbook()
+    # Mapping modalities to their corresponding excel workbooks.
+    modality_workbook = {
+        'XRAY': xray_Workbook,
+        'PFT': pft_Workbook,
+        'OPTOMETRY': opto_Workbook,
+        'AUDIOMETRY': audio_Workbook,
+        'ECG': ecg_Workbook,
+        'VITALS': vitals_Workbook,
+        'PATHOLOGY': patho_Workbook
+    }
+
+    modality_patient_data_dictionary = {
+    'XRAY': {header: None for header in headers['XRAY']},
+    'PFT': {header: None for header in headers['PFT']},
+    'OPTOMETRY': {header: None for header in headers['OPTOMETRY']},
+    'AUDIOMETRY': {header: None for header in headers['AUDIOMETRY']},
+    'ECG': {header: None for header in headers['ECG']},
+    'VITALS': {header: None for header in headers['VITALS']},
+    'PATHOLOGY': {header: None for header in headers['PATHOLOGY']}
+    }
+
+    # Get the workbook and headers based on the modality
+    wb = modality_workbook.get(modality)
+    modality_headers = headers.get(modality)
+    respective_patient_data = modality_patient_data_dictionary.get(modality)
+
+    if wb and modality_headers:
+        ws = wb.active
+
+        # Checking if the first row is empty (indicating no headers or data)
+        if not any(cell.value for cell in ws[1]):  # Checking if the first row has any values
+            # Adding headers to the first row
+            for col_num, header in enumerate(modality_headers, 1):
+                cell = ws.cell(row=1, column=col_num)
+                cell.value = header
+                cell.font = Font(bold=True)
+
+            # Set the serial number to 1 (this can be updated as data is added)
+            serial_no = 1
+        else:
+            # If it is already created than simply update the serial no.
+            serial_no += 1
+
+        # Returning the workbook and the serial number
+        return wb, serial_no, respective_patient_data
+    else:
+        # If modality is invalid, returning None
+        return None, None, None
+
 
 # This function i've created to check or get the data based on conditions.
 def extract_data_based_on_modality(page_text, patient_details, modalities):
