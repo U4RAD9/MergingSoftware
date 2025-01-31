@@ -752,23 +752,41 @@ def generate_excel_for_individual_files():
             pdf_files = list(input_dir.glob("*.pdf"))
             error_count = 0
 
+            # Define unwanted phrases
+            unwanted_phrases = ["Referrer Dr.", "left ear", "RECORDERS & MEDICARE SYSTEMS", "OPTOMETRY", "ECG", "VITALS", "RBC Count", "PDW *", "PDW"]
+
             # There are mainly 8 files here (leaving multiple formats of an individual) :
             patient_data_ecg = []
             patient_data_ecg1 = []
             patient_data_pft = []
             patient_data_xray = []
             # Adding the remaining files too.
-            patient_data_optometry = []
+            patient_data_opto = []
             patient_data_vitals = []
             patient_data_audio = []
             patient_data_blood = []
-            patient_data_others = []
 
             # These are the count of individual files :
-            total_ecg_files, total_ecg_files1, total_pft_files, total_xray_files, total_optometry_files, total_vitals_files, total_audio_files, total_blood_files, total_others_files = [] * 9
+            # total_ecg_files, total_ecg_files1, total_pft_files, total_xray_files, total_opto_files, total_vitals_files, total_audio_files, total_blood_files = [] * 8
+            total_ecg_files = 0
+            total_ecg_files1 = 0
+            total_pft_files = 0
+            total_xray_files = 0
+            total_opto_files = 0
+            total_vitals_files = 0
+            total_audio_files = 0
+            total_blood_files = 0
 
             # This is the excel file path for all these files :
-            excel_file_path_ecg, excel_file_path_pft, excel_file_path_xray, excel_file_path_opto, excel_file_path_vitals, excel_file_path_audio, excel_file_path_blood, excel_file_path_others = "" * 8
+            # excel_file_path_ecg, excel_file_path_pft, excel_file_path_xray, excel_file_path_opto, excel_file_path_vitals, excel_file_path_audio, excel_file_path_blood = "" * 7
+            excel_file_path_ecg = ""
+            excel_file_path_pft = ""
+            excel_file_path_xray = ""
+            excel_file_path_opto = ""
+            excel_file_path_vitals = ""
+            excel_file_path_audio = ""
+            excel_file_path_blood = ""
+
             # Above i don't need to make the path for ecg1(i.e. coming for the drive.), because it is going to be appended to the place of 'ecg' only.
 
             workbook_xray = Workbook()
@@ -787,70 +805,89 @@ def generate_excel_for_individual_files():
                         elif len(pdf_reader.pages) == 2:
                             first_page = pdf_reader.pages[1]
                             first_page_text = first_page.extract_text()
+                        # Fixing this thing for our pathology / blood data extraction.
+                        elif len(pdf_reader.pages) > 2:
+                            first_page = pdf_reader.pages[0]
+                            first_page_text = first_page.extract_text()
                         else:
                             second_page = pdf_reader.pages[1]
                             second_page_text = second_page.extract_text()
                             first_page_text = second_page_text
 
                         try:
-                            # xray
-                            if "Study Date" in first_page_text or "Report Date" in first_page_text:
-                                patient_id = str(first_page_text).split("Patient ID")[1].split(" ")[1].lower().strip()
-                                patient = str(first_page_text).split("Name")[1].split("Date")[0].split(" ")[0].strip().lower()
-                                if "patient" in patient:
-                                    patient_name = patient.split("patient")[0].strip()
-                                else:
-                                    patient_name = patient
-                                gender = str(first_page_text).split("Sex")[1].split("Study Date")[0].strip().lower()
-                                if 'Yr' or 'Y' or 'yrs' in first_page_text:
-                                    if 'Yr' in first_page_text:
-                                        age_data = str(first_page_text).split("Age")[1].split("Yr")[0].strip()
-                                        if "Days" in age_data:
-                                            age = age_data.split("Days")[0]
-                                        else:
-                                            age = age_data
-                                    if 'Y' in first_page_text:
-                                        age_data = str(first_page_text).split("Age")[1].split('Y')[0].strip()
-                                        if "Days" in age_data:
-                                            age = age_data.split("Days")[0]
-                                        else:
-                                            age = age_data
-                                    if 'yrs' in first_page_text:
-                                        age_data = str(first_page_text).split("Age")[1].split('yrs')[0].strip()
-                                        if "Days" in age_data:
-                                            age = age_data.split("Days")[0]
-                                        else:
-                                            age = age_data
+                            # # xray
+                            # if "Study Date" in first_page_text or "Report Date" in first_page_text:
+                            #     patient_id = str(first_page_text).split("Patient ID")[1].split(" ")[1].lower().strip()
+                            #     patient = str(first_page_text).split("Name")[1].split("Date")[0].split(" ")[0].strip().lower()
+                            #     if "patient" in patient:
+                            #         patient_name = patient.split("patient")[0].strip()
+                            #     else:
+                            #         patient_name = patient
+                            #     gender = str(first_page_text).split("Sex")[1].split("Study Date")[0].strip().lower()
+                            #     if 'Yr' or 'Y' or 'yrs' in first_page_text:
+                            #         if 'Yr' in first_page_text:
+                            #             age_data = str(first_page_text).split("Age")[1].split("Yr")[0].strip()
+                            #             if "Days" in age_data:
+                            #                 age = age_data.split("Days")[0]
+                            #             else:
+                            #                 age = age_data
+                            #         if 'Y' in first_page_text:
+                            #             age_data = str(first_page_text).split("Age")[1].split('Y')[0].strip()
+                            #             if "Days" in age_data:
+                            #                 age = age_data.split("Days")[0]
+                            #             else:
+                            #                 age = age_data
+                            #         if 'yrs' in first_page_text:
+                            #             age_data = str(first_page_text).split("Age")[1].split('yrs')[0].strip()
+                            #             if "Days" in age_data:
+                            #                 age = age_data.split("Days")[0]
+                            #             else:
+                            #                 age = age_data
 
-                                test_date = str(first_page_text).split("Study Date")[1].split("\n")[1].split("Time")[1]
-                                report_date = str(first_page_text).split("Report Date")[1].split("\n")[1].split("Time")[1]
+                            #     test_date = str(first_page_text).split("Study Date")[1].split("\n")[1].split("Time")[1]
+                            #     report_date = str(first_page_text).split("Report Date")[1].split("\n")[1].split("Time")[1]
 
-                                if "Adv: Clinical correlation." not in first_page_text:
-                                    findings_data = str(first_page_text).split("IMPRESSION")[1].split("Correlate clinically")[0].split(":")[1].strip()
-                                    if "Please" in findings_data:
-                                        findings_with_dot = findings_data.split("Please")[0]
-                                        if "•" in findings_with_dot:
-                                            findings = findings_with_dot.split("•")[1].split(".")[0]
-                                        else:
-                                            findings = findings_with_dot.split(".")[0]
-                                    else:
-                                        findings_with_dot = findings_data
-                                        if "•" in findings_with_dot:
-                                            findings = findings_with_dot.split("•")[1].split(".")[0]
-                                        else:
-                                            findings = findings_with_dot.split(".")[0]
-
-
-                                if "Adv: Clinical correlation." in first_page_text:
-                                    findings_data1 = str(first_page_text).split("Impression")[1]
-                                    if findings_data1:
-                                        findings = findings_data1.split("Adv: Clinical correlation.")[0].split(':')[1].strip()
+                            #     if "Adv: Clinical correlation." not in first_page_text:
+                            #         findings_data = str(first_page_text).split("IMPRESSION")[1].split("Correlate clinically")[0].split(":")[1].strip()
+                            #         if "Please" in findings_data:
+                            #             findings_with_dot = findings_data.split("Please")[0]
+                            #             if "•" in findings_with_dot:
+                            #                 findings = findings_with_dot.split("•")[1].split(".")[0]
+                            #             else:
+                            #                 findings = findings_with_dot.split(".")[0]
+                            #         else:
+                            #             findings_with_dot = findings_data
+                            #             if "•" in findings_with_dot:
+                            #                 findings = findings_with_dot.split("•")[1].split(".")[0]
+                            #             else:
+                            #                 findings = findings_with_dot.split(".")[0]
 
 
-                                if  findings == 'No significant abnormality noted' or findings == 'No significant abnormality':
-                                    findings = 'No significant abnormality seen'
-                                patient_data_xray.append((patient_id, patient_name, age, gender, test_date, report_date, remove_illegal_characters(findings)))
-                                print(patient_id, patient_name, age, gender, test_date, report_date, findings)
+                            #     if "Adv: Clinical correlation." in first_page_text:
+                            #         findings_data1 = str(first_page_text).split("Impression")[1]
+                            #         if findings_data1:
+                            #             findings = findings_data1.split("Adv: Clinical correlation.")[0].split(':')[1].strip()
+
+
+                            #     if  findings == 'No significant abnormality noted' or findings == 'No significant abnormality':
+                            #         findings = 'No significant abnormality seen'
+                            #     patient_data_xray.append((patient_id, patient_name, age, gender, test_date, report_date, remove_illegal_characters(findings)))
+                            #     print(patient_id, patient_name, age, gender, test_date, report_date, findings)
+                            #     total_xray_files += 1
+
+                            # Printing the first page text data everytime it's processed.
+                            print(f"This is the extracted text data : {first_page_text}")
+
+                            # For the xray report from u4rad pacs reporting bot.
+                            if "Test Date:" in first_page_text and "Report Date:" in first_page_text and not any(phrase in first_page_text for phrase in unwanted_phrases):
+                                print("This is an xray report from our u4rad pacs.")
+                                patient_data_xray = extract_data_from_the_u4rad_pacs_xray_file(first_page_text)
+                                print(patient_data_xray)
+                                if isinstance(patient_data_xray, dict):  # If it's a dictionary, convert it into a tuple or list
+                                    patient_data_xray = tuple(patient_data_xray.values())
+                                    print(f"Data after making it a tuple : {data}")
+                                # else:
+                                #     data = patient_data_xray
                                 total_xray_files += 1
 
                             # Extract ECG data
@@ -888,6 +925,66 @@ def generate_excel_for_individual_files():
                                 patient_data_pft.append((patient_id, patient_name, patient_age, gender, height, weight, date, remove_illegal_characters(observation)))
                                 print(patient_id, patient_name, patient_age, gender, height, weight, date, observation)
                                 total_pft_files += 1
+                            
+                            # For pathology reports.
+                            elif "RBC Count" in first_page_text or "PDW *" in first_page_text or "PDW" in first_page_text :
+                                print("This is an blood report from our u4rad redcliffe pathology.")
+                                patient_data_blood = extract_data_from_the_redcliffe_patho_file(first_page_text)
+                                print(patient_data_blood)
+                                if isinstance(patient_data_blood, dict):  # If it's a dictionary, convert it into a tuple or list
+                                    patient_data_blood = tuple(patient_data_blood.values())
+                                    print(f"Data after making it a tuple : {data}")
+                                # else:
+                                #     data = patient_data_blood
+                                total_blood_files += 1
+                            
+                            # For vitals reports.
+                            elif "VITALS" in first_page_text:
+                                print("This is an vitals report from our reportingbot.")
+                                patient_data_vitals = extract_data_from_bot_vitals_file(first_page_text)
+                                print(patient_data_vitals)
+                                if isinstance(patient_data_vitals, dict):  # If it's a dictionary, convert it into a tuple or list
+                                    patient_data_vitals = tuple(patient_data_vitals.values())
+                                    print(f"Data after making it a tuple : {data}")
+                                # else:
+                                #     data = patient_data_vitals
+                                total_vitals_files += 1
+
+                            # For the xray report from stradus.
+                            elif "Referrer Dr" in first_page_text and "Time" in first_page_text:
+                                print("This is an xray report from our Stradus.")
+                                patient_data_xray = extract_data_from_the_stradus_xray_file(first_page_text)
+                                print(patient_data_xray)
+                                if isinstance(patient_data_xray, dict):  # If it's a dictionary, convert it into a tuple or list
+                                    patient_data_xray = tuple(patient_data_xray.values())
+                                    print(f"Data after making it a tuple : {data}")
+                                # else:
+                                #     data = patient_data_xray
+                                total_xray_files += 1
+                            
+                            # For the xray report from reporting bot.
+                            elif "X-RAY" in first_page_text:
+                                print("This is an xray report from our Reporting Bot.")
+                                patient_data_xray = extract_data_from_the_bot_xray_file(first_page_text)
+                                print(patient_data_xray)
+                                if isinstance(patient_data_xray, dict):  # If it's a dictionary, convert it into a tuple or list
+                                    patient_data_xray = tuple(patient_data_xray.values())
+                                    print(f"Data after making it a tuple : {data}")
+                                # else:
+                                #     data = patient_data_xray
+                                total_xray_files += 1
+
+                            # For Audiometry reports.
+                            elif "left ear" in first_page_text:
+                                print("This is an audio report from our Reporting Bot.")
+                                patient_data_audio = extract_data_from_bot_audio_file(first_page_text)
+                                print(patient_data_audio)
+                                if isinstance(patient_data_audio, dict):  # If it's a dictionary, convert it into a tuple or list
+                                    patient_data_audio = tuple(patient_data_audio.values())
+                                    print(f"Data after making it a tuple : {data}")
+                                # else:
+                                #     data = patient_data_audio
+                                total_audio_files += 1
 
                             #ECG-REPORTINGBOT
                             elif "ECG" in first_page_text:
@@ -902,26 +999,20 @@ def generate_excel_for_individual_files():
                                 patient_data_ecg1.append((patient_id, patient_name, age, gender, test_date, report_date, heart_rate, remove_illegal_characters(findings)))
                                 total_ecg_files1 += 1
 
-
-                            #XRAY-REPORTINGBOT
-                            else:
-                                patient_id = str(first_page_text).split('Patient ID:')[1].split('Age:')[0].strip()
-                                patient_name= str(first_page_text).split('Name:')[1].split('Patient ID:')[0].strip()
-                                age = str(first_page_text).split('Age:')[1].split('Gender:')[0].strip()
-                                gender = str(first_page_text).split('Gender:')[1].split('Test date:')[0].strip()
-                                test_date = str(first_page_text).split('Test date:')[1].split('Report date:')[0].strip()
-                                report_date = str(first_page_text).split('Report date:')[1].split('X-RAY')[0].strip()
-                                findings_data = str(first_page_text).split('IMPRESSION:')[1].split("Dr.")[0]
-                                print(findings_data)
-
-                                if "•" in findings_data:
-                                    findings = findings_data.split("•")[1].split(".")[0].strip()
+                            # If it is a Optometry report.
+                            elif "OPTOMETRY" in first_page_text:
+                                patient_data_opto = extract_data_from_bot_opto_file(first_page_text)
+                                # If extract_data_from_bot_opto_file returns a dictionary, you may want to ensure it gets converted into a tuple or list for appending
+                                if isinstance(patient_data_opto, dict):  # If it's a dictionary, convert it into a tuple or list
+                                    data = tuple(patient_data_opto.values())
+                                    print(f"Data after making it a tuple : {data}")
                                 else:
-                                    findings = findings_data
-                                print(patient_id, patient_name, age, gender, report_date, remove_illegal_characters(findings_data))
-                                patient_data_xray.append((patient_id, patient_name, age, gender, test_date, report_date, remove_illegal_characters(findings)))
-                                total_xray_files += 1
+                                    data = patient_data_opto
+                                # patient_data_opto.append((patient_id, patient_name, age, gender, test_date, report_date, heart_rate, remove_illegal_characters(findings)))
+                                total_opto_files += 1
 
+                            else:
+                                print(f"This is an Others File.")
 
                         except IndexError as e:
                             error_count += 1
@@ -929,6 +1020,7 @@ def generate_excel_for_individual_files():
                             shutil.copy2(pdf_file, error_file_path)
                             print(f"Error processing file {pdf_file}: Invalid PDF Format")
 
+            # ecg that we used to have on our drive (Not anymore needed.)
             if total_ecg_files > 0:
                 workbook_ecg = openpyxl.Workbook()
                 sheet_ecg = workbook_ecg.active
@@ -954,6 +1046,7 @@ def generate_excel_for_individual_files():
                 excel_file_path_ecg = os.path.join(output_dir, "patient_data_ecg.xlsx")
                 workbook_ecg.save(excel_file_path_ecg)
 
+            # ecg that we are currently having in our reporting bot.
             if total_ecg_files1 > 0:
                 workbook_ecg = openpyxl.Workbook()
                 sheet_ecg = workbook_ecg.active
@@ -973,7 +1066,7 @@ def generate_excel_for_individual_files():
                 excel_file_path_ecg = os.path.join(output_dir, "patient_data_ecg.xlsx")
                 workbook_ecg.save(excel_file_path_ecg)
 
-
+            # pft report data.
             if total_pft_files > 0:
                 workbook_pft = openpyxl.Workbook()
                 sheet_pft = workbook_pft.active
@@ -993,6 +1086,125 @@ def generate_excel_for_individual_files():
                 excel_file_path_pft = os.path.join(output_dir, "patient_data_pft.xlsx")
                 workbook_pft.save(excel_file_path_pft)
 
+            # the optometry worksheet.
+            if total_opto_files > 0:
+                workbook_opto = openpyxl.Workbook()
+                sheet_opto = workbook_opto.active
+
+                sheet_opto['A1'] = 'patient_id'
+                sheet_opto['B1'] = 'patient_name'
+                sheet_opto['C1'] = 'patient_age'
+                sheet_opto['D1'] = 'gender'
+                sheet_opto['E1'] = 'test_date'
+                sheet_opto['F1'] = 'report_date'
+                sheet_opto['G1'] = 'far_vision_right'
+                sheet_opto['H1'] = 'near_vision_right'
+                sheet_opto['I1'] = 'distance_vision_right'
+                sheet_opto['J1'] = 'reading_vision_right'
+                sheet_opto['K1'] = 'spherical_right'
+                sheet_opto['L1'] = 'cylindrical_right'
+                sheet_opto['M1'] = 'axis_right'
+                sheet_opto['N1'] = 'add_right'
+                sheet_opto['O1'] = 'far_vision_left'
+                sheet_opto['P1'] = 'near_vision_left'
+                sheet_opto['Q1'] = 'distance_vision_right'
+                sheet_opto['R1'] = 'reading_vision_left'
+                sheet_opto['S1'] = 'spherical_left'
+                sheet_opto['T1'] = 'cylindrical_left'
+                sheet_opto['U1'] = 'axis_left'
+                sheet_opto['V1'] = 'add_left'
+                sheet_opto['W1'] = 'colour_blindness'
+
+                for row, data in enumerate(patient_data_opto, start=2):
+                    sheet_opto.append(data)
+
+                excel_file_path_opto = os.path.join(output_dir, "OptometryPatientDetails.xlsx")
+                workbook_opto.save(excel_file_path_opto)
+
+            # the Pathology worksheet.
+            if total_blood_files > 0:
+                workbook_blood = openpyxl.Workbook()
+                sheet_blood = workbook_blood.active
+
+                sheet_blood['A1'] = 'patient_id'
+                sheet_blood['B1'] = 'patient_name'
+                sheet_blood['C1'] = 'patient_age'
+                sheet_blood['D1'] = 'gender'
+                sheet_blood['E1'] = 'test_date'
+                sheet_blood['F1'] = 'report_date'
+                sheet_blood['G1'] = 'haemoglobin'
+                sheet_blood['H1'] = 'rbc_count'
+                sheet_blood['I1'] = 'rbc_pcv'
+                sheet_blood['J1'] = 'rbc_mcv'
+                sheet_blood['K1'] = 'rbc_mch'
+                sheet_blood['L1'] = 'rbc_mchc'
+                sheet_blood['M1'] = 'rbc_rdw_cv'
+                sheet_blood['N1'] = 'rbc_rdw_sd'
+                sheet_blood['O1'] = 'wbc_tlc'
+                sheet_blood['P1'] = 'dlc_neutrophils'
+                sheet_blood['Q1'] = 'dlc_lymphocytes'
+                sheet_blood['R1'] = 'dlc_monocytes'
+                sheet_blood['S1'] = 'dlc_eosinophils'
+                sheet_blood['T1'] = 'dlc_basophils'
+                sheet_blood['U1'] = 'alc_neutrophils'
+                sheet_blood['V1'] = 'alc_lymphocytes'
+                sheet_blood['W1'] = 'alc_monocytes'
+                sheet_blood['X1'] = 'alc_eosinophils'
+                sheet_blood['Y1'] = 'alc_basophils'
+                sheet_blood['Z1'] = 'platelet_count'
+                sheet_blood['Y1'] = 'mean_platelet_volume'
+                sheet_blood['Z1'] = 'pct'
+
+                for row, data in enumerate(patient_data_blood, start=2):
+                    sheet_blood.append(data)
+
+                excel_file_path_blood = os.path.join(output_dir, "PathologyPatientDetails.xlsx")
+                workbook_blood.save(excel_file_path_blood)
+
+            # the audiometry worksheet.
+            if total_audio_files > 0:
+                workbook_audio = openpyxl.Workbook()
+                sheet_audio = workbook_audio.active
+
+                sheet_audio['A1'] = 'patient_id'
+                sheet_audio['B1'] = 'patient_name'
+                sheet_audio['C1'] = 'patient_age'
+                sheet_audio['D1'] = 'gender'
+                sheet_audio['E1'] = 'test_date'
+                sheet_audio['F1'] = 'report_date'
+                sheet_audio['G1'] = 'left_ear_finding'
+                sheet_audio['H1'] = 'right_ear_finding'
+
+                for row, data in enumerate(patient_data_audio, start=2):
+                    sheet_audio.append(data)
+
+                excel_file_path_audio = os.path.join(output_dir, "AudiometryPatientDetails.xlsx")
+                workbook_audio.save(excel_file_path_audio)
+
+
+            # the vitals worksheet.
+            if total_vitals_files > 0:
+                workbook_vitals = openpyxl.Workbook()
+                sheet_vitals = workbook_vitals.active
+
+                sheet_vitals['A1'] = 'patient_id'
+                sheet_vitals['B1'] = 'patient_name'
+                sheet_vitals['C1'] = 'patient_age'
+                sheet_vitals['D1'] = 'gender'
+                sheet_vitals['E1'] = 'test_date'
+                sheet_vitals['F1'] = 'report_date'
+                sheet_vitals['G1'] = 'height'
+                sheet_vitals['H1'] = 'weight'
+                sheet_vitals['I1'] = 'bp'
+                sheet_vitals['J1'] = 'Pulse'
+
+                for row, data in enumerate(patient_data_vitals, start=2):
+                    sheet_vitals.append(data)
+
+                excel_file_path_vitals = os.path.join(output_dir, "VitalsPatientDetails.xlsx")
+                workbook_vitals.save(excel_file_path_vitals)
+
+
             if total_xray_files > 0:
                 workbook_xray = openpyxl.Workbook()
                 sheet_xray = workbook_xray.active
@@ -1003,7 +1215,7 @@ def generate_excel_for_individual_files():
                 sheet_xray['D1'] = 'gender'
                 sheet_xray['E1'] = 'test_date'
                 sheet_xray['F1'] = 'report_date'
-                sheet_xray['G1'] = 'Findings'
+                sheet_xray['G1'] = 'findings'
 
 
                 for row, data in enumerate(patient_data_xray, start=2):
@@ -1017,10 +1229,10 @@ def generate_excel_for_individual_files():
                     else:
                         cell.fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")  # Red
 
-                excel_file_path_xray = os.path.join(output_dir, "patient_data_xray.xlsx")
+                excel_file_path_xray = os.path.join(output_dir, "XrayPatientData.xlsx")
                 workbook_xray.save(excel_file_path_xray)
 
-            message = f"Total {total_ecg_files1} ECG and {total_pft_files} PFT and {total_xray_files} XRAY data files have been extracted and saved successfully.\n\n"
+            message = f"Total {total_ecg_files1} ECG and {total_pft_files} PFT and {total_xray_files} XRAY data and {total_opto_files} Opto and {total_vitals_files} Vitals data and {total_audio_files} Audio and {total_blood_files} Patho data files have been extracted and saved successfully.\n\n"
             message += f"ECG Output File: {excel_file_path_ecg}\n\nPFT Output File: {excel_file_path_pft}\n\nXRAY Output File: {excel_file_path_xray}"
             messagebox.showinfo("Patient Data Extractor", message)
 
