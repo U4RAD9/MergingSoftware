@@ -38,6 +38,7 @@ I've fixed the following things as of 23rd September 2024 :
 28 Jan 25:
 1. I've also completed the first option in the pateint's test count i.e. for individual files, Key thing to remember here is that i've created a unique patient data instead of using the global patient data dictionary was creating some issues.
 
-29 Jan 25:
-1. 
+30 Jan 25:
+1. I've optimized mostly all the helper functions , i.e. they will extract all the data mostly correct, if there is another format, than the next developer just needs to add that condition.
+2. I've created the generate excel for merged files function now, and it is under testing.
 -- Himanshu Jangid.

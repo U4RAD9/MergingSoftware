@@ -1051,7 +1051,7 @@ def generate_excel_for_merged_files():
     duplicate_file = {}
     id_mismatch = {}
     # Set to store modalities encountered for each unique file_id
-    unique_file_id_set = {}
+    unique_file_id_set = set()
 
     # Making the modalities a set to store all the modalities for a particular id/key.
     modalities = set()
@@ -1116,11 +1116,55 @@ def generate_excel_for_merged_files():
                             # Add the modality to the unique set for this file_id
                             unique_file_id_set.add(modality)
                             # Call the modality based excel function to get the workbook for that modality
-                            wb, serial_no, respective_patient_data = modality_based_excel_workbook(modality)
-                            serial_no = wb.max_row + 1
+                            # Here the modality is storing the workbook name.
+                            # i know that there isn't any workbook for Others so making this condition also worked.
+                            if modality == 'OTHERS':
+                                continue
+                            # I've got the respective_patient_data, to store the data in proper way, might be useful.
+                            modality, serial_no, respective_patient_data = modality_based_excel_workbook(modality)
+                            # serial_no = modality.max_row + 1
+                            # Creating the row data to append the data.
+                            row_data = [serial_no] + list(patient_details.values())
+                            # Make the workbook active to perform our work.
+                            ws = modality.active
+                            ws.append(row_data)
+                            print(f"Added data for {modality} to row {serial_no}")
                     
                     # Clearing the modalities set when work is done.
                     modalities.clear()
+        except Exception as e:
+                print(f"Error processing {input_folder_path}: {str(e)}")
+                exception_files[str(input_folder_path)] = str(e)
+                continue  # Skip this file and continue with the next
+
+    # Saving workbooks for each modality in the output directory
+    modality_workbooks = {
+        'XRAY': 'Xray_Test_Details.xlsx',
+        'PFT': 'Pft_Test_Details.xlsx',
+        'OPTOMETRY': 'Optometry_Test_Details.xlsx',
+        'AUDIOMETRY': 'Audiometry_Test_Details.xlsx',
+        'ECG': 'Ecg_Test_Details.xlsx',
+        'VITALS': 'Vitals_Test_Details.xlsx',
+        'PATHOLOGY': 'Pathology_Test_Details.xlsx'
+    }
+
+    # this is having some errors i need to fix them
+    # Iterate over modality workbooks and save them
+    for modality, filename in modality_workbooks.items():
+        wb, _, _ = modality_based_excel_workbook(modality)
+        if wb:
+            output_file_path = Path(output_folder_path) / filename
+            wb.save(output_file_path)
+            print(f"Saved {modality} data to {output_file_path}")
+    print(f"All the data extraction is completed and the errors are handled separately, and the data saved successfully to {output_file_path}.")
+    
+    # Display the completion message
+    messagebox.showinfo("Process Completed", 
+                        f"Total {num_files_processed} files were Processed.\n\nThe Excel file has been generated and saved to the selected Output Directory : \n{output_file_path}\n\n\nThank you for using OTHM !")
+    
+    # After processing files, calling the function to handle all errors
+    handle_all_errors(naming_errors, duplicate_file, id_mismatch, incomplete_data, exception_files, output_folder_path, input_folder_path)
+
 
 # This is the sample code to make a separate window to ask questions regarding which option our user wants to chose , 
 # I'll use this afterwards.
@@ -2222,12 +2266,13 @@ from openpyxl import Workbook
 from openpyxl.styles import Font
 
 def modality_based_excel_workbook(modality):
+    print(f"This is the modality :{modality}")
     # Headers for each modality
     headers = {
         'XRAY': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'FINDINGS'],
         'PFT': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'HEIGHT', 'WEIGHT', 'OBSERVATIONS'],
-        'OPTOMETRY': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'FAR VISION RIGHT', 'NEAR VISION RIGHT', 'SPHERICAL RIGHT', 'CYLINDRICAL RIGHT', 'AXIS RIGHT', 'ADD RIGHT',
-                      'FAR VISION LEFT', 'NEAR VISION LEFT', 'SPHERICAL LEFT', 'CYLINDRICAL LEFT', 'AXIS LEFT', 'ADD LEFT', 'COLOUR BLINDNESS'],
+        'OPTOMETRY': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'FAR VISION RIGHT', 'NEAR VISION RIGHT', 'DISTANCE VISION RIGHT', 'READING RIGHT','SPHERICAL RIGHT', 'CYLINDRICAL RIGHT', 'AXIS RIGHT', 'ADD RIGHT',
+                      'FAR VISION LEFT', 'NEAR VISION LEFT',  'DISTANCE VISION LEFT', 'READING VISION LEFT', 'SPHERICAL LEFT', 'CYLINDRICAL LEFT', 'AXIS LEFT', 'ADD LEFT', 'COLOUR BLINDNESS'],
         'AUDIOMETRY': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'LEFT EAR FINDING', 'RIGHT EAR FINDING'],
         'ECG': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'HEART RATE', 'FINDINGS'],
         'VITALS': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'HEIGHT', 'WEIGHT', 'BLOOD PRESSURE', 'PULSE'],
@@ -2253,6 +2298,17 @@ def modality_based_excel_workbook(modality):
         'VITALS': vitals_Workbook,
         'PATHOLOGY': patho_Workbook
     }
+    # # Initialize workbooks for each modality
+    # modality_workbook = {
+    #     'XRAY': Workbook(),
+    #     'PFT': Workbook(),
+    #     'OPTOMETRY': Workbook(),
+    #     'AUDIOMETRY': Workbook(),
+    #     'ECG': Workbook(),
+    #     'VITALS': Workbook(),
+    #     'PATHOLOGY': Workbook()
+    # }
+
 
     modality_patient_data_dictionary = {
     'XRAY': {header: None for header in headers['XRAY']},
@@ -2266,17 +2322,20 @@ def modality_based_excel_workbook(modality):
 
     # Get the workbook and headers based on the modality
     wb = modality_workbook.get(modality)
+    if wb is None:
+        print(f"Error: Workbook for modality '{modality}' not found!")
+        return None, None, None
+    # ws = wb.active
     modality_headers = headers.get(modality)
     respective_patient_data = modality_patient_data_dictionary.get(modality)
-
     if wb and modality_headers:
-        ws = wb.active
+        # ws = wb.active
 
         # Checking if the first row is empty (indicating no headers or data)
-        if not any(cell.value for cell in ws[1]):  # Checking if the first row has any values
+        if not any(cell.value for cell in wb[1]):  # Checking if the first row has any values
             # Adding headers to the first row
             for col_num, header in enumerate(modality_headers, 1):
-                cell = ws.cell(row=1, column=col_num)
+                cell = wb.cell(row=1, column=col_num)
                 cell.value = header
                 cell.font = Font(bold=True)
 
@@ -2284,9 +2343,9 @@ def modality_based_excel_workbook(modality):
             serial_no = 1
         else:
             # If it is already created than simply update the serial no.
-            serial_no += 1
+            serial_no = wb.max_row + 1
 
-        # Returning the workbook and the serial number
+        # Returning the active workbook and the serial number
         return wb, serial_no, respective_patient_data
     else:
         # If modality is invalid, returning None
@@ -2456,11 +2515,14 @@ def extract_data_from_the_bot_xray_file(pageText):
     patient_info = {}
     try:
         # Check if the "IMPRESSION:" text exists for finding data, right now , i am commenting it.
-        # findings_data = str(pageText).split('IMPRESSION:')[1].split("Dr.")[0]
-        # if "•" in findings_data:
-        #     findings = findings_data.split("•")[1].split(".")[0].strip()
-        # else:
-        #     findings = findings_data.strip()
+        if 'IMPRESSION:' in pageText:
+            findings_data = str(pageText).split('IMPRESSION:')[1].split("Dr.")[0]
+            if "•" in findings_data:
+                findings = findings_data.split("•")[1].split(".")[0].strip()
+            else:
+                findings = findings_data.strip()
+        else:
+            findings = None
         
         # If specific "Study Date" and "Report Date" condition applies, this i've still included in case the format changes.
         if "Study Date" and "Report Date" in pageText:
@@ -2478,7 +2540,7 @@ def extract_data_from_the_bot_xray_file(pageText):
             patient_info['test_date'] = str(pageText).split('Test date:')[1].split('Report date:')[0].strip()
             patient_info['report_date'] = str(pageText).split('Report date:')[1].split('X-RAY')[0].strip()
         # This i will use to clean up the findings of the data.
-        # patient_info['findings'] = remove_illegal_characters(findings)
+        patient_info['findings'] = remove_illegal_characters(findings)
     except IndexError:
         print("Error extracting X-ray data.")
     return patient_info
@@ -2502,6 +2564,23 @@ def extract_data_from_the_stradus_xray_file(pageText):
             patient_info['report_date'] = str(pageText).split('Report Date')[1].split('pm')[0].split('Time')[1].split('\n')[0].strip()
         
         # I will extract other data from here afterwards.
+        # I know that the doctors will make this mistake so i'm fixing it here (maximum cases). - Himanshu.
+        if 'IMPRESSION :-' in pageText:
+            findings_data = str(pageText).split('IMPRESSION :-')[1].split("ADVICE :-")[0]
+            if "•" in findings_data:
+                findings = findings_data.split("•")[1].split(".")[0].strip()
+            else:
+                findings = findings_data.strip()
+        elif 'IMPRESSIONS :-' in pageText:
+            findings_data = str(pageText).split('IMPRESSIONS :-')[1].split("ADVICE :-")[0]
+            if "•" in findings_data:
+                findings = findings_data.split("•")[1].split(".")[0].strip()
+            else:
+                findings = findings_data.strip()
+        else:
+            findings = None
+        # Now, adding the findings in the excel.
+        patient_info['findings'] = remove_illegal_characters(findings)
         
     except IndexError:
         print("Error extracting X-ray data.")
@@ -2519,7 +2598,35 @@ def extract_data_from_the_u4rad_pacs_xray_file(pageText):
         patient_info['report_date'] = str(pageText).split('Report Date:')[1].split('Dr.')[0].split('\n')[0].strip()
         
         # I will extract other data from here afterwards.
-        
+        # I know that the doctors will make this mistake so i'm fixing it here (maximum cases). - Himanshu.
+        if 'IMPRESSION:' in pageText:
+            findings_data = str(pageText).split('IMPRESSION:')[1].split("Dr.")[0]
+            if "•" in findings_data:
+                findings = findings_data.split("•")[1].split(".")[0].strip()
+            else:
+                findings = findings_data.strip()
+        elif 'IMPRESSIONS:' in pageText:
+            findings_data = str(pageText).split('IMPRESSIONS:')[1].split("Dr.")[0]
+            if "•" in findings_data:
+                findings = findings_data.split("•")[1].split(".")[0].strip()
+            else:
+                findings = findings_data.strip()
+        elif 'IMPRESSION;' in pageText:
+            findings_data = str(pageText).split('IMPRESSION;')[1].split("Dr.")[0]
+            if "•" in findings_data:
+                findings = findings_data.split("•")[1].split(".")[0].strip()
+            else:
+                findings = findings_data.strip()
+        elif 'IMPRESSIONS;' in pageText:
+            findings_data = str(pageText).split('IMPRESSIONS;')[1].split("Dr.")[0]
+            if "•" in findings_data:
+                findings = findings_data.split("•")[1].split(".")[0].strip()
+            else:
+                findings = findings_data.strip()
+        else:
+            findings = None
+        # Now adding the findings in the sheet.
+        patient_info['findings'] = remove_illegal_characters(findings)
     except IndexError:
         print("Error extracting X-ray data.")
     return patient_info
@@ -2528,8 +2635,8 @@ def extract_data_from_the_u4rad_pacs_xray_file(pageText):
 def extract_data_from_the_redcliffe_patho_file(pageText):
     patient_info = {}
     try:
-        if "RBC Count" in pageText:
-            # Handling the different naming formats for patient name and ID in blood reports
+        # Handling the extraction of patient details with error handling for each field
+        try:
             if "Patient Name :" in pageText:
                 complete_patient_name = str(pageText).split("Patient Name : ")[1].split("DOB/")[0].strip()
                 patient_info['patient_id'] = complete_patient_name.rsplit(" ", 1)[1]
@@ -2546,18 +2653,112 @@ def extract_data_from_the_redcliffe_patho_file(pageText):
                 complete_patient_name = str(pageText).split("PATIENT Name : ")[1].split("DOB/")[0].strip()
                 patient_info['patient_id'] = complete_patient_name.rsplit("_", 1)[1]
                 patient_info['patient_name'] = complete_patient_name.rsplit("_", 1)[0].split(" ", 1)[1].lower()
-            
-            # These are mostly not changed in the formatting, so taking them out of the conditions.
+            else:
+                patient_info['patient_id'] = None
+                patient_info['patient_name'] = None
+        except Exception as e:
+            patient_info['patient_id'] = None
+            patient_info['patient_name'] = None
+            print(f"Error extracting patient details: {e}")
+        
+        # Age, gender, and test dates with error handling
+        try:
             patient_info['patient_age'] = str(pageText).split('DOB/Age/Gender :')[1].split('Patient ID / UHID :')[0].split('Y/')[0].strip()
             patient_info['gender'] = str(pageText).split('DOB/Age/Gender :')[1].split('Patient ID / UHID :')[0].split('Y/')[1].strip()
             patient_info['test_date'] = str(pageText).split('Sample Collected :')[1].split('Report STATUS :')[0].strip()
             patient_info['report_date'] = str(pageText).split('Report Date :')[1].split('Test Description')[0].strip()
-            
-            print("Patient Name:", patient_info['patient_name'])
-            print("Patient ID:", patient_info['patient_id'])
-    except IndexError:
-        print("Error extracting blood report data.")
+        except Exception as e:
+            patient_info['patient_age'] = None
+            patient_info['gender'] = None
+            patient_info['test_date'] = None
+            patient_info['report_date'] = None
+            print(f"Error extracting age, gender, or dates: {e}")
+        
+        # Hemoglobin extraction with error handling
+        try:
+            if 'Hemoglobin' in pageText:
+                patient_info['haemoglobin'] = str(pageText).split('Hemoglobin')[1].split('colorimetric')[1].split(' ')[0].strip()
+            elif 'Haemoglobin' in pageText:
+                patient_info['haemoglobin'] = str(pageText).split('Haemoglobin')[1].split('colorimetric')[1].split(' ')[0].strip()
+            else:
+                patient_info['haemoglobin'] = None
+        except Exception as e:
+            patient_info['haemoglobin'] = None
+            print(f"Error extracting hemoglobin: {e}")
+        
+        # RBC, WBC, Platelet counts with error handling
+        try:
+            patient_info['rbc_count'] = str(pageText).split('RBC Count')[1].split('Electrical impedance')[1].split(' ')[0].strip()
+            patient_info['rbc_pcv'] = str(pageText).split('PCV')[1].split('Calculated')[1].split(' ')[0].strip()
+            patient_info['rbc_mcv'] = str(pageText).split('MCV')[1].split('Calculated')[1].split(' ')[0].strip()
+            patient_info['rbc_mch'] = str(pageText).split('MCH')[1].split('Calculated')[1].split(' ')[0].strip()
+            patient_info['rbc_mchc'] = str(pageText).split('MCHC')[1].split('Calculated')[1].split(' ')[0].strip()
+            patient_info['rbc_rdw_cv'] = str(pageText).split('RDW (CV)')[1].split('Calculated')[1].split(' ')[0].strip()
+            patient_info['rbc_rdw_sd'] = str(pageText).split('RDW-SD')[1].split('Calculated')[1].split(' ')[0].strip()
+            patient_info['wbc_tlc'] = str(pageText).split('TLC')[1].split('Electrical impedance and microscopy')[1].split(' ')[0].strip()
+        except Exception as e:
+            patient_info['rbc_count'] = None
+            patient_info['rbc_pcv'] = None
+            patient_info['rbc_mcv'] = None
+            patient_info['rbc_mch'] = None
+            patient_info['rbc_mchc'] = None
+            patient_info['rbc_rdw_cv'] = None
+            patient_info['rbc_rdw_sd'] = None
+            patient_info['wbc_tlc'] = None
+            print(f"Error extracting RBC/WBC counts: {e}")
+        
+        # Differential counts with error handling
+        try:
+            patient_info['dlc_neutrophils'] = str(pageText).split('Differential Leucocyte Count')[1].split('Neutrophils')[1].split(' ')[0].strip()
+            patient_info['dlc_lymphocytes'] = str(pageText).split('Differential Leucocyte Count')[1].split('Lymphocytes')[1].split(' ')[0].strip()
+            patient_info['dlc_monocytes'] = str(pageText).split('Differential Leucocyte Count')[1].split('Monocytes')[1].split(' ')[0].strip()
+            patient_info['dlc_eosinophils'] = str(pageText).split('Differential Leucocyte Count')[1].split('Eosinophils')[1].split(' ')[0].strip()
+            patient_info['dlc_basophils'] = str(pageText).split('Differential Leucocyte Count')[1].split('Basophils')[1].split(' ')[0].strip()
+        except Exception as e:
+            patient_info['dlc_neutrophils'] = None
+            patient_info['dlc_lymphocytes'] = None
+            patient_info['dlc_monocytes'] = None
+            patient_info['dlc_eosinophils'] = None
+            patient_info['dlc_basophils'] = None
+            print(f"Error extracting DLC counts: {e}")
+        
+        # Absolute Leukocyte Counts with error handling
+        try:
+            patient_info['alc_neutrophils'] = str(pageText).split('Absolute Leukocyte Counts')[1].split('Neutrophils.')[1].split(' ')[0].strip()
+            patient_info['alc_lymphocytes'] = str(pageText).split('Absolute Leukocyte Counts')[1].split('Lymphocytes.')[1].split(' ')[0].strip()
+            patient_info['alc_monocytes'] = str(pageText).split('Absolute Leukocyte Counts')[1].split('Monocytes.')[1].split(' ')[0].strip()
+            patient_info['alc_eosinophils'] = str(pageText).split('Absolute Leukocyte Counts')[1].split('Eosinophils.')[1].split(' ')[0].strip()
+            patient_info['alc_basophils'] = str(pageText).split('Absolute Leukocyte Counts')[1].split('Basophils.')[1].split(' ')[0].strip()
+        except Exception as e:
+            patient_info['alc_neutrophils'] = None
+            patient_info['alc_lymphocytes'] = None
+            patient_info['alc_monocytes'] = None
+            patient_info['alc_eosinophils'] = None
+            patient_info['alc_basophils'] = None
+            print(f"Error extracting ALC counts: {e}")
+        
+        # Platelet counts and other tests with error handling
+        try:
+            patient_info['platelet_count'] = str(pageText).split('Platelet Count')[1].split('Electrical impedance and microscopy')[1].split(' ')[0].strip()
+            patient_info['mean_platelet_volume'] = str(pageText).split('Mean Platelet Volume (MPV)')[1].split('Calculated')[1].split(' ')[0].strip()
+            if 'PCT' in pageText:
+                patient_info['pct'] = str(pageText).split('PCT')[1].split('Calculated')[1].split(' ')[0].strip()
+            else:
+                patient_info['pct'] = None
+        except Exception as e:
+            patient_info['platelet_count'] = None
+            patient_info['mean_platelet_volume'] = None
+            patient_info['pct'] = None
+            print(f"Error extracting platelet data: {e}")
+
+        print("Patient Name:", patient_info['patient_name'])
+        print("Patient ID:", patient_info['patient_id'])
+
+    except Exception as e:
+        print(f"General error in extracting data: {e}")
+
     return patient_info
+
 
 # This is my function for extracting data from all Reporting Bot Audiometry Reports:
 def extract_data_from_bot_audio_file(pageText):
@@ -2569,6 +2770,8 @@ def extract_data_from_bot_audio_file(pageText):
         patient_info['gender'] = str(pageText).split("Gender")[1].split("Test date")[0].strip()
         patient_info['test_date'] = str(pageText).split("Test date")[1].split('Report date')[0].strip()
         patient_info['report_date'] = str(pageText).split("Report date")[1].strip()
+        patient_info['left_ear_finding'] = str(pageText).split("in left ear")[0].split("Finding:")[1].strip()
+        patient_info['right_ear_finding'] = str(pageText).split("in right ear")[0].split("in left ear.")[1].strip()
     except IndexError:
         print("Error extracting Audiometry data.")
     return patient_info
@@ -2583,6 +2786,23 @@ def extract_data_from_bot_opto_file(pageText):
         patient_info['gender'] = str(pageText).split("Gender:")[1].split("Test Date:")[0].strip()
         patient_info['test_date'] = str(pageText).split("Test Date:")[1].split('Report Date:')[0].strip()
         patient_info['report_date'] = str(pageText).split("Report Date:")[1].split('OPTOMETRY')[0].strip()
+        patient_info['far_vision_right'] = str(pageText).split("Distance(Far):")[1].split('vision in right eye')[0].strip()
+        patient_info['near_vision_right'] = str(pageText).split("Distance(Near):")[1].split('vision in right eye')[0].strip()
+        patient_info['distance_vision_right'] = str(pageText).split("Right Eye")[1].split('Left Eye')[0].strip().split(" ")[0].strip()
+        patient_info['reading_vision_right'] = str(pageText).split("Right Eye")[1].split('Left Eye')[0].strip().split(" ")[1].strip()
+        patient_info['spherical_right'] = str(pageText).split("Right Eye")[1].split('Left Eye')[0].strip().split(" ")[2].strip()
+        patient_info['cylindrical_right'] = str(pageText).split("Right Eye")[1].split('Left Eye')[0].strip().split(" ")[3].strip()
+        patient_info['axis_right'] = str(pageText).split("Right Eye")[1].split('Left Eye')[0].strip().split(" ")[4].strip()
+        patient_info['add_right'] = str(pageText).split("Right Eye")[1].split('Left Eye')[0].strip().split(" ")[5].strip()
+        patient_info['far_vision_left'] = str(pageText).split("Distance(Far):")[1].split('vision in right eye-')[1].split("vision in left eye.")[0].strip()
+        patient_info['near_vision_left'] = str(pageText).split("Distance(Far):")[1].split('vision in right eye-')[1].split("vision in left eye.")[0].strip()
+        patient_info['distance_vision_right'] = str(pageText).split("Left Eye")[1].split('Color vision')[0].strip().split(" ")[0].strip()
+        patient_info['reading_vision_left'] = str(pageText).split("Left Eye")[1].split('Color vision')[0].strip().split(" ")[1].strip()
+        patient_info['spherical_left'] = str(pageText).split("Left Eye")[1].split('Color vision')[0].strip().split(" ")[2].strip()
+        patient_info['cylindrical_left'] = str(pageText).split("Left Eye")[1].split('Color vision')[0].strip().split(" ")[3].strip()
+        patient_info['axis_left'] = str(pageText).split("Left Eye")[1].split('Color vision')[0].strip().split(" ")[4].strip()
+        patient_info['add_left'] = str(pageText).split("Left Eye")[1].split('Color vision')[0].strip().split(" ")[5].strip()
+        patient_info['colour_blindness'] = str(pageText).split("Color vision check(Ishihara test):")[1].split('color blindness')[0].strip()
     except IndexError:
         print("Error extracting Optometry data.")
     return patient_info
@@ -2607,6 +2827,10 @@ def extract_data_from_bot_vitals_file(pageText):
             patient_info['gender'] = str(pageText).split("Gender:")[1].split("Test date:")[0].strip()
             patient_info['test_date'] = str(pageText).split("Test date:")[1].split('Report date:')[0].strip()
             patient_info['report_date'] = str(pageText).split("Report date:")[1].split('VITALS')[0].strip()
+            patient_info['height'] = str(pageText).split("Height(in cm)")[1].split("Weight(in kg)")[0].strip()
+            patient_info['weight'] = str(pageText).split("Weight(in kg)")[1].split("BMI(kg/m2)")[0].strip()
+            patient_info['bp'] = str(pageText).split("Blood Pressure(mmHg)")[1].split("Pulse(bpm)")[0].strip()
+            patient_info['Pulse'] = str(pageText).split("Pulse(bpm)")[1].strip()
     except IndexError:
         print("Error extracting Vitals data.")
     return patient_info
@@ -2805,48 +3029,48 @@ redcliffe_label.place(x=620, y=10, anchor='ne')
 merge_all_files = tk.Label(window, text="Merge Everything", font=("Arial", 16, "bold"))
 merge_all_files.place(x=600, y=130, anchor='ne')
 
-merge_redcliffe_button1 = tk.Button(window, bg='blue', fg='white', activebackground='darkblue', activeforeground='white', padx=25, pady=10, relief='raised', text="Merge PDF Files", command=merge_redcliffe_pdf_files, font=("Arial", 12, "bold"))
-merge_redcliffe_button2 = tk.Button(window, bg='magenta', fg='black', activebackground='gold', activeforeground='black', padx=30, pady=10, relief='raised', text="Merge All PDF Files", command=merge_all, font=("Arial", 12, "bold"))
-merge_redcliffe_button1.place(x=600, y=58, anchor='ne')
-merge_redcliffe_button2.place(x=623, y=178, anchor='ne')
+merge_redcliffe_button1 = tk.Button(window, bg='blue', fg='white', activebackground='darkblue', activeforeground='white', padx=25, pady=10, relief='raised', text="Merge PDF Files", command=merge_redcliffe_pdf_files, font=("Arial", 12, "bold"), width=15)
+merge_redcliffe_button2 = tk.Button(window, bg='magenta', fg='black', activebackground='gold', activeforeground='black', padx=25, pady=10, relief='raised', text="Merge All PDF Files", command=merge_all, font=("Arial", 12, "bold"), width=15)
+merge_redcliffe_button1.place(x=615, y=58, anchor='ne')
+merge_redcliffe_button2.place(x=613, y=178, anchor='ne')
 
 pdf_rename_label = tk.Label(window, text="File Renaming System", font=("Arial", 16, "bold"))
-pdf_rename_label.pack(pady=10, padx=30, anchor='w')
+pdf_rename_label.pack(pady=10, padx=37, anchor='w')
 
-pdf_rename_button1 = tk.Button(window, bg='orange', fg='black', activebackground='darkblue', activeforeground='white', padx=50, pady=10, relief='raised', text="Rename PDF Files", command=rename_pdf_files, font=("Arial", 12, "bold"))
-pdf_rename_button1.pack(pady=8, padx=20, anchor='w')
+pdf_rename_button1 = tk.Button(window, bg='orange', fg='black', activebackground='darkblue', activeforeground='white', padx=25, pady=10, relief='raised', text="Rename PDF Files", command=rename_pdf_files, font=("Arial", 12, "bold"), width=15)
+pdf_rename_button1.pack(pady=8, padx=45, anchor='w')
 
 generate_excel_label = tk.Label(window, text="Count of Individual's Tests", font=("Arial", 16, "bold"))
 generate_excel_label.place(x=305, y=130, anchor='ne')
 
-generate_excel_button = tk.Button(window, bg='pink',fg='black', activebackground='darkblue', activeforeground='white',padx=40, pady=10, relief='raised', text="Patient's Test Count", command=count_of_tests_for_individual_patient, font=("Arial", 12, "bold"))
-generate_excel_button.place(x=300, y=180, anchor='ne')
+generate_excel_button = tk.Button(window, bg='pink',fg='black', activebackground='darkblue', activeforeground='white',padx=25, pady=10, relief='raised', text="Patient's Test Count", command=count_of_tests_for_individual_patient, font=("Arial", 12, "bold"), width=15)
+generate_excel_button.place(x=250, y=180, anchor='ne')
 
 check_pdf_File = tk.Label(window, text="Check Pdf Files", font=("Arial", 16, "bold"))
 check_pdf_File.place(x=930, y=10, anchor='ne')
 
-check_pdf_button = tk.Button(window, bg='green',fg='black', activebackground='darkblue', activeforeground='white',padx=37, pady=10, relief='raised', text="Check Pdf Files", command=check_pdf_files, font=("Arial", 12, "bold"))
+check_pdf_button = tk.Button(window, bg='green',fg='black', activebackground='darkblue', activeforeground='white',padx=25, pady=10, relief='raised', text="Check Pdf Files", command=check_pdf_files, font=("Arial", 12, "bold"), width=15)
 check_pdf_button.place(x=956, y=57, anchor='ne')
 
 check_pdf_File = tk.Label(window, text="Split Pdf Files", font=("Arial", 16, "bold"))
 check_pdf_File.place(x=903, y=130, anchor='ne')
 
-check_pdf_button = tk.Button(window, bg='yellow',fg='black', activebackground='darkblue', activeforeground='white',padx=30, pady=10, relief='raised', text="Split Pdf Files", command=split_patient_file, font=("Arial", 12, "bold"))
-check_pdf_button.place(x=940, y=175, anchor='ne')
+check_pdf_button = tk.Button(window, bg='yellow',fg='black', activebackground='darkblue', activeforeground='white',padx=25, pady=10, relief='raised', text="Split Pdf Files", command=split_patient_file, font=("Arial", 12, "bold"), width=15)
+check_pdf_button.place(x=955, y=175, anchor='ne')
 
 # Label for the check Generate Excel for Merged Files button.
 check_ecg_files_label = tk.Label(window, text="Data Extraction For Merged Files", font=("Arial", 16, "bold"))
-check_ecg_files_label.place(x = 345, y=250, anchor='ne')
+check_ecg_files_label.place(x = 425, y=250, anchor='ne')
 # Button for the check ecg file label.
-check_ecg_files_button = tk.Button(window, bg='grey',fg='black', activebackground='darkgrey', activeforeground='white',padx=30, pady=10, relief='raised', text="Generate Excel for Merged Files", command=generate_excel_for_merged_files, font=("Arial", 12, "bold"))
-check_ecg_files_button.place(x= 330, y=310, anchor='ne')
+check_ecg_files_button = tk.Button(window, bg='grey',fg='black', activebackground='darkgrey', activeforeground='white',padx=25, pady=10, relief='raised', text="Generate Excel for Merged Files", command=generate_excel_for_merged_files, font=("Arial", 12, "bold"), width=25)
+check_ecg_files_button.place(x= 410, y=310, anchor='ne')
 
 # Label for the check ecg file button.
 check_ecg_files_label = tk.Label(window, text="Data Extraction For Individual Files", font=("Arial", 16, "bold"))
-check_ecg_files_label.place(x = 780, y=250, anchor='ne')
+check_ecg_files_label.place(x = 860, y=250, anchor='ne')
 # Button for the check ecg file label.
-check_ecg_files_button = tk.Button(window, bg='red',fg='black', activebackground='red', activeforeground='white',padx=30, pady=10, relief='raised', text="Generate Excel For Individual File", command=generate_excel_for_individual_files, font=("Arial", 12, "bold"))
-check_ecg_files_button.place(x=805, y=310, anchor='ne')
+check_ecg_files_button = tk.Button(window, bg='red',fg='black', activebackground='red', activeforeground='white',padx=25, pady=10, relief='raised', text="Generate Excel For Individual File", command=generate_excel_for_individual_files, font=("Arial", 12, "bold"), width=25)
+check_ecg_files_button.place(x=835, y=310, anchor='ne')
 
 
 # dcm_to_pdf = tk.Label(window, text="Reports Observation", font=("Arial", 16, "bold"))
