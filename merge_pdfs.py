@@ -583,11 +583,16 @@ def merge_all():
     else:
         tk.messagebox.showwarning("Input Directory", "Input directory not selected.")
 
+import shutil
+import re
+from tkinter import filedialog, messagebox
+from pathlib import Path
+import PyPDF2
+
 def rename_pdf_files():
     input_directory = filedialog.askdirectory(title="Select Input Directory")
 
     if input_directory:
-        # Prompt user to select output directory
         output_directory = filedialog.askdirectory(title="Select Output Directory")
 
         if output_directory:
@@ -598,134 +603,110 @@ def rename_pdf_files():
             error_dir = output_dir / "error_files"
             error_dir.mkdir(parents=True, exist_ok=True)
 
-            # List all PDF files in the input directory
             pdf_files = list(input_dir.glob("*.pdf"))
 
             if pdf_files:
                 renamed_count = 0
                 error_count = 0
-                patient_id = ''
-                patient_name = ''
 
                 for pdf_file in pdf_files:
-                    with open(pdf_file, 'rb') as file:
-                        pdf_reader = PyPDF2.PdfReader(file)
-                        if len(pdf_reader.pages) > 0:
-                            first_page_text = ''
-                            second_page_text = ''
-                            if len(pdf_reader.pages) == 1:
-                                first_page = pdf_reader.pages[0]
-                                first_page_text = first_page.extract_text()
-                            elif len(pdf_reader.pages) >= 4:
-                                first_page = pdf_reader.pages[0]
-                                first_page_text = first_page.extract_text()
-                            else:
-                                second_page = pdf_reader.pages[1]
-                                second_page_text = second_page.extract_text()
-                                first_page_text = second_page_text
+                    try:
+                        with open(pdf_file, 'rb') as file:
+                            pdf_reader = PyPDF2.PdfReader(file)
+                            if len(pdf_reader.pages) == 0:
+                                raise ValueError("PDF has no pages")
 
-                            print("Here is the extracted text from the page :")
-                            print(first_page_text)
-                            print("End of the extracted text")
-                            print("This is the second page text if exists , ", second_page_text)
+                            # Extract text from first or second page
+                            first_page = pdf_reader.pages[0]
+                            first_page_text = first_page.extract_text()
 
-                            try:
-                                # Condition for renaming the blood report - Himanshu.
-                                if "RBC Count" in first_page_text:
-                                    if "Patient Name :" in first_page_text:
-                                        complete_patient_name = str(first_page_text).split("Patient Name : ")[1].split("DOB/")[0].strip()
-                                        patient_id = complete_patient_name.rsplit(" ",1)[1]
-                                        patient_name = complete_patient_name.rsplit(" ",1)[0].split(" ",1)[1].lower()
-                                    elif "Patient NAME :" in first_page_text:
-                                        complete_patient_name = str(first_page_text).split("Patient NAME : ")[1].split("DOB/")[0].strip()
-                                        patient_id = complete_patient_name.rsplit("_",1)[1]
-                                        patient_name = complete_patient_name.rsplit("_",1)[0].split(" ",1)[1].lower()
-                                    elif "PATIENT NAME :" in first_page_text:
-                                        complete_patient_name = str(first_page_text).split("PATIENT NAME : ")[1].split("DOB/")[0].strip()
-                                        patient_id = complete_patient_name.rsplit("_",1)[1]
-                                        patient_name = complete_patient_name.rsplit("_",1)[0].split(" ",1)[1].lower()
-                                    elif "PATIENT Name :" in first_page_text:
-                                        complete_patient_name = str(first_page_text).split("PATIENT Name : ")[1].split("DOB/")[0].strip()
-                                        patient_id = complete_patient_name.rsplit("_",1)[1]
-                                        patient_name = complete_patient_name.rsplit("_",1)[0].split(" ",1)[1].lower()
-                                    print("This is the complete Patient Name extracted : ", complete_patient_name)
-                                    print("This is the Patient Id : ", patient_id)
-                                    print("This is the extracted Patient Name: ", patient_name)
-                                # X-RAY
-                                elif "Study Date" and "Report Date" in first_page_text:
-                                    patient_id = str(first_page_text).split("Patient ID")[1].split(" ")[1].lower().strip()
-                                    patient = str(first_page_text).split("Name")[1].split("Date")[0].split(" ")[0].strip().lower()
-                                    if "patient" in patient:
-                                        patient_name = patient.split("patient")[0].strip()
-                                    else:
-                                        patient_name = patient
-                                    print(patient_id, patient_name)
-                                # PFT
-                                elif "RECORDERS & MEDICARE SYSTEMS" in first_page_text:
-                                    patient_id = str(first_page_text).split("ID     :")[1].split("Age")[0].strip().lower()
-                                    patient_name = str(first_page_text).split("Patient: ")[1].split("Refd.By:")[0].split("\n")[0].lower()
-                                    if " " in patient_name:
-                                        patient_name = patient_name.split(" ")[0]
-                                    else:
-                                        patient_name = patient_name
+                            second_page_text = ""
+                            if len(pdf_reader.pages) > 1:
+                                second_page_text = pdf_reader.pages[1].extract_text()
 
-                                # ECG GRAPH
-                                elif "Acquired on:" in first_page_text:
-                                    if "Id :" in first_page_text:
-                                        patient_id = str(first_page_text).split("Id :")[1].split(" ")[1].split("\n")[0].strip().lower()
-                                        if patient_id == '':
-                                            patient_id = str(first_page_text).split("Comments")[1].split("HR")[0].strip()
-                                            print("comments", patient_id)
+                            patient_id = ""
+                            patient_name = ""
 
-                                    elif "Id:" in first_page_text:
-                                        patient_id = str(first_page_text).split("Id:")[1].split(" ")[1].split("\n")[0].strip().lower()
-                                        if patient_id == '':
-                                            patient_id = str(first_page_text).split("Comments")[1].split("HR")[0].strip()
+                            # ---- BLOOD REPORT LOGIC ----
+                            if "RBC Count" in first_page_text:
+                                if "Patient Name :" in first_page_text:
+                                    complete_name = first_page_text.split("Patient Name : ")[1].split("DOB/")[0].strip()
+                                    patient_id = complete_name.rsplit(" ", 1)[1]
+                                    patient_name = complete_name.rsplit(" ", 1)[0].split(" ", 1)[1].lower()
+                                elif "Patient NAME :" in first_page_text:
+                                    complete_name = first_page_text.split("Patient NAME : ")[1].split("DOB/")[0].strip()
+                                    patient_id = complete_name.rsplit("_", 1)[1]
+                                    patient_name = complete_name.rsplit("_", 1)[0].split(" ", 1)[1].lower()
 
+                            # ---- X-RAY REPORT ----
+                            elif "Study Date" in first_page_text and "Report Date" in first_page_text:
+                                patient_id = first_page_text.split("Patient ID")[1].split(" ")[1].strip().lower()
+                                patient = first_page_text.split("Name")[1].split("Date")[0].split(" ")[0].strip().lower()
+                                patient_name = patient.split("patient")[0].strip() if "patient" in patient else patient
 
+                            # ---- PFT REPORT (your sample PDF) ----
+                            elif "RECORDERS" in first_page_text:
+                                match_id = re.search(r"ID\s*:?\s*([A-Za-z0-9]+)", first_page_text)
+                                patient_id = match_id.group(1).lower() if match_id else "unknown"
 
-                                    if "Name :" in first_page_text:
-                                        patient_name = str(first_page_text).split("Name :")[1].split("Age")[0].split(" ")[1].strip().lower()
-                                    elif "Name:" in first_page_text:
-                                        patient_name = str(first_page_text).split("Name:")[1].split("Age")[0].split(" ")[1].strip().lower()
-                                    else:
-                                        patient_name = 'invalid'
+                                match_name = re.search(r"Patient:\s*([^\n\r]+)", first_page_text)
+                                patient_name = match_name.group(1).strip().split()[0].lower() if match_name else "unknown"
 
-                                elif "ECG" in second_page_text:
-                                    patient_id = str(second_page_text).split("Patient ID:")[1].split("Age:")[0].strip().lower()
-                                    patient_name = str(second_page_text).split("Name:")[1].split("Patient ID:")[0].strip().lower()
-                                elif "left ear" in first_page_text:
-                                    patient_id = str(first_page_text).split('Patient ID')[1].split('Age')[0].strip().lower()
-                                    patient_name = str(first_page_text).split('Name')[1].split('Patient ID')[0].strip().lower()
-                                elif "OPTOMETRY" in first_page_text:
-                                    patient_id = str(first_page_text).split("Patient ID:")[1].split("Age:")[0].strip().lower()
-                                    patient_name = str(first_page_text).split("Name:")[1].split("Patient ID:")[0].strip().lower()
-                                elif "VITALS" in first_page_text:
-                                    patient_id = str(first_page_text).split("Patient ID:")[1].split("Age:")[0].strip().lower()
-                                    patient_name = str(first_page_text).split("Name:")[1].split("Patient ID:")[0].strip().lower()  
+                            # ---- ECG GRAPH ----
+                            elif "Acquired on:" in first_page_text:
+                                if "Id :" in first_page_text:
+                                    patient_id = first_page_text.split("Id :")[1].split(" ")[1].split("\n")[0].strip().lower()
+                                elif "Id:" in first_page_text:
+                                    patient_id = first_page_text.split("Id:")[1].split(" ")[1].split("\n")[0].strip().lower()
 
+                                if "Name :" in first_page_text:
+                                    patient_name = first_page_text.split("Name :")[1].split("Age")[0].split(" ")[1].strip().lower()
+                                elif "Name:" in first_page_text:
+                                    patient_name = first_page_text.split("Name:")[1].split("Age")[0].split(" ")[1].strip().lower()
 
-                                renamed_count += 1
-                                new_filename = patient_id + "_" + patient_name
-                                new_file_path = output_dir / (new_filename + pdf_file.suffix)
-                                shutil.copy2(pdf_file, new_file_path)
-                                print(f"File renamed and saved: {pdf_file} -> {new_file_path}")
+                            # ---- ECG from second page ----
+                            elif "ECG" in second_page_text:
+                                patient_id = second_page_text.split("Patient ID:")[1].split("Age:")[0].strip().lower()
+                                patient_name = second_page_text.split("Name:")[1].split("Patient ID:")[0].strip().lower()
 
-                            except Exception as e:
-                                error_count += 1
-                                error_file_path = error_dir / pdf_file.name
-                                shutil.copy2(pdf_file, error_file_path)
-                                print(f"Error processing file {pdf_file}: {str(e)}")
+                            # ---- Audiometry ----
+                            elif "left ear" in first_page_text:
+                                patient_id = first_page_text.split('Patient ID')[1].split('Age')[0].strip().lower()
+                                patient_name = first_page_text.split('Name')[1].split('Patient ID')[0].strip().lower()
 
+                            # ---- Optometry & Vitals ----
+                            elif "OPTOMETRY" in first_page_text or "VITALS" in first_page_text:
+                                patient_id = first_page_text.split("Patient ID:")[1].split("Age:")[0].strip().lower()
+                                patient_name = first_page_text.split("Name:")[1].split("Patient ID:")[0].strip().lower()
+
+                            # Validate extracted values
+                            if not patient_id or not patient_name or patient_id == "unknown" or patient_name == "unknown":
+                                raise ValueError("Missing or invalid patient details")
+
+                            # Rename file
+                            new_filename = f"{patient_id}_{patient_name}{pdf_file.suffix}"
+                            new_file_path = output_dir / new_filename
+                            shutil.copy2(pdf_file, new_file_path)
+                            renamed_count += 1
+                            print(f"✔ Renamed: {pdf_file.name} -> {new_filename}")
+
+                    except Exception as e:
+                        error_count += 1
+                        error_file_path = error_dir / pdf_file.name
+                        shutil.copy2(pdf_file, error_file_path)
+                        print(f"❌ Error processing {pdf_file.name}: {str(e)}")
+
+                # Summary
                 messagebox.showinfo("Renaming Complete", f"{renamed_count} PDF files have been renamed.")
                 if error_count > 0:
-                    messagebox.showwarning("Error Files", f"{error_count} PDF files encountered errors. They are saved in the 'error_files' folder.")
+                    messagebox.showwarning("Errors Encountered", f"{error_count} PDF files had issues and were saved in 'error_files'.")
+
             else:
-                messagebox.showwarning("No PDF Files", "No PDF files found in the input directory.")
+                messagebox.showwarning("No PDFs Found", "No PDF files found in the selected input directory.")
         else:
-            messagebox.showwarning("Output Directory", "Output directory not selected.")
+            messagebox.showwarning("Missing Output Directory", "You must select an output directory.")
     else:
-        messagebox.showwarning("Input Directory", "Input directory not selected.")
+        messagebox.showwarning("Missing Input Directory", "You must select an input directory.")
 
 def remove_illegal_characters(value):
     if isinstance(value, str):
@@ -881,14 +862,24 @@ def generate_excel_for_individual_files():
                             # For the xray report from u4rad pacs reporting bot.
                             if "Test Date:" in first_page_text and "Report Date:" in first_page_text and not any(phrase in first_page_text for phrase in unwanted_phrases):
                                 print("This is an xray report from our u4rad pacs.")
-                                patient_data_xray = extract_data_from_the_u4rad_pacs_xray_file(first_page_text)
-                                print(patient_data_xray)
-                                if isinstance(patient_data_xray, dict):  # If it's a dictionary, convert it into a tuple or list
-                                    patient_data_xray = tuple(patient_data_xray.values())
-                                    print(f"Data after making it a tuple : {data}")
-                                # else:
-                                #     data = patient_data_xray
+                                # patient_data_xray = extract_data_from_the_u4rad_pacs_xray_file(first_page_text)
+                                # print(patient_data_xray)
+                                # if isinstance(patient_data_xray, dict):  # If it's a dictionary, convert it into a tuple or list
+                                #     patient_data_xray = tuple(patient_data_xray.values())
+                                #     print(f"Data after making it a tuple : {patient_data_xray}")
+                                # # else:
+                                # #     data = patient_data_xray
+                                # total_xray_files += 1
+                                data = extract_data_from_the_u4rad_pacs_xray_file(first_page_text)
+                                if isinstance(data, dict):
+                                    data_tuple = tuple(data.values())
+                                elif isinstance(data, tuple):
+                                    data_tuple = data
+                                else:
+                                    data_tuple = (data,)  # Handle other cases if needed
+                                patient_data_xray.append(data_tuple)
                                 total_xray_files += 1
+                                print(f"Data added: {data_tuple}")
 
                             # Extract ECG data
                             elif "Acquired on:" in first_page_text:
@@ -929,86 +920,172 @@ def generate_excel_for_individual_files():
                             # For pathology reports.
                             elif "RBC Count" in first_page_text or "PDW *" in first_page_text or "PDW" in first_page_text :
                                 print("This is an blood report from our u4rad redcliffe pathology.")
-                                patient_data_blood = extract_data_from_the_redcliffe_patho_file(first_page_text)
-                                print(patient_data_blood)
-                                if isinstance(patient_data_blood, dict):  # If it's a dictionary, convert it into a tuple or list
-                                    patient_data_blood = tuple(patient_data_blood.values())
-                                    print(f"Data after making it a tuple : {data}")
-                                # else:
-                                #     data = patient_data_blood
+                                # patient_data_blood = extract_data_from_the_redcliffe_patho_file(first_page_text)
+                                # print(patient_data_blood)
+                                # if isinstance(patient_data_blood, dict):  # If it's a dictionary, convert it into a tuple or list
+                                #     patient_data_blood = tuple(patient_data_blood.values())
+                                #     print(f"Data after making it a tuple : {patient_data_blood}")
+                                # # else:
+                                # #     data = patient_data_blood
+                                # total_blood_files += 1
+                                data = extract_data_from_the_redcliffe_patho_file(first_page_text)
+                                if isinstance(data, dict):
+                                    data_tuple = tuple(data.values())
+                                elif isinstance(data, tuple):
+                                    data_tuple = data
+                                else:
+                                    data_tuple = (data,)
+                                patient_data_blood.append(data_tuple)
                                 total_blood_files += 1
                             
                             # For vitals reports.
                             elif "VITALS" in first_page_text:
                                 print("This is an vitals report from our reportingbot.")
-                                patient_data_vitals = extract_data_from_bot_vitals_file(first_page_text)
-                                print(patient_data_vitals)
-                                if isinstance(patient_data_vitals, dict):  # If it's a dictionary, convert it into a tuple or list
-                                    patient_data_vitals = tuple(patient_data_vitals.values())
-                                    print(f"Data after making it a tuple : {data}")
-                                # else:
-                                #     data = patient_data_vitals
+                                # patient_data_vitals = extract_data_from_bot_vitals_file(first_page_text)
+                                # print(patient_data_vitals)
+                                # if isinstance(patient_data_vitals, dict):  # If it's a dictionary, convert it into a tuple or list
+                                #     patient_data_vitals = tuple(patient_data_vitals.values())
+                                #     print(f"Data after making it a tuple : {patient_data_vitals}")
+                                # # else:
+                                # #     data = patient_data_vitals
+                                # total_vitals_files += 1
+                                data = extract_data_from_bot_vitals_file(first_page_text)
+                                if isinstance(data, dict):
+                                    data_tuple = tuple(data.values())
+                                elif isinstance(data, tuple):
+                                    data_tuple = data
+                                else:
+                                    data_tuple = (data,)
+                                patient_data_vitals.append(data_tuple)
                                 total_vitals_files += 1
 
                             # For the xray report from stradus.
                             elif "Referrer Dr" in first_page_text and "Time" in first_page_text:
                                 print("This is an xray report from our Stradus.")
-                                patient_data_xray = extract_data_from_the_stradus_xray_file(first_page_text)
-                                print(patient_data_xray)
-                                if isinstance(patient_data_xray, dict):  # If it's a dictionary, convert it into a tuple or list
-                                    patient_data_xray = tuple(patient_data_xray.values())
-                                    print(f"Data after making it a tuple : {data}")
-                                # else:
-                                #     data = patient_data_xray
+                                # patient_data_xray = extract_data_from_the_stradus_xray_file(first_page_text)
+                                # print(patient_data_xray)
+                                # if isinstance(patient_data_xray, dict):  # If it's a dictionary, convert it into a tuple or list
+                                #     patient_data_xray = tuple(patient_data_xray.values())
+                                #     print(f"Data after making it a tuple : {patient_data_xray}")
+                                # # else:
+                                # #     data = patient_data_xray
+                                # total_xray_files += 1
+                                data = extract_data_from_the_stradus_xray_file(first_page_text)
+                                if isinstance(data, dict):
+                                    data_tuple = tuple(data.values())
+                                elif isinstance(data, tuple):
+                                    data_tuple = data
+                                else:
+                                    data_tuple = (data,)
+                                patient_data_xray.append(data_tuple)
                                 total_xray_files += 1
                             
                             # For the xray report from reporting bot.
                             elif "X-RAY" in first_page_text:
                                 print("This is an xray report from our Reporting Bot.")
-                                patient_data_xray = extract_data_from_the_bot_xray_file(first_page_text)
-                                print(patient_data_xray)
-                                if isinstance(patient_data_xray, dict):  # If it's a dictionary, convert it into a tuple or list
-                                    patient_data_xray = tuple(patient_data_xray.values())
-                                    print(f"Data after making it a tuple : {data}")
-                                # else:
-                                #     data = patient_data_xray
+                                # patient_data_xray = extract_data_from_the_bot_xray_file(first_page_text)
+                                # print(patient_data_xray)
+                                # if isinstance(patient_data_xray, dict):  # If it's a dictionary, convert it into a tuple or list
+                                #     patient_data_xray = tuple(patient_data_xray.values())
+                                #     print(f"Data after making it a tuple : {patient_data_xray}")
+                                # # else:
+                                # #     data = patient_data_xray
+                                # total_xray_files += 1
+                                data = extract_data_from_the_bot_xray_file(first_page_text)
+                                if isinstance(data, dict):
+                                    data_tuple = tuple(data.values())
+                                elif isinstance(data, tuple):
+                                    data_tuple = data
+                                else:
+                                    data_tuple = (data,)
+                                patient_data_xray.append(data_tuple)
                                 total_xray_files += 1
 
                             # For Audiometry reports.
                             elif "left ear" in first_page_text:
                                 print("This is an audio report from our Reporting Bot.")
-                                patient_data_audio = extract_data_from_bot_audio_file(first_page_text)
-                                print(patient_data_audio)
-                                if isinstance(patient_data_audio, dict):  # If it's a dictionary, convert it into a tuple or list
-                                    patient_data_audio = tuple(patient_data_audio.values())
-                                    print(f"Data after making it a tuple : {data}")
-                                # else:
-                                #     data = patient_data_audio
+                                # patient_data_audio = extract_data_from_bot_audio_file(first_page_text)
+                                # print(patient_data_audio)
+                                # if isinstance(patient_data_audio, dict):  # If it's a dictionary, convert it into a tuple or list
+                                #     patient_data_audio = tuple(patient_data_audio.values())
+                                #     print(f"Data after making it a tuple : {patient_data_audio}")
+                                # # else:
+                                # #     data = patient_data_audio
+                                # total_audio_files += 1
+                                data = extract_data_from_bot_audio_file(first_page_text)
+                                if isinstance(data, dict):
+                                    data_tuple = tuple(data.values())
+                                elif isinstance(data, tuple):
+                                    data_tuple = data
+                                else:
+                                    data_tuple = (data,)
+                                patient_data_audio.append(data_tuple)
                                 total_audio_files += 1
 
                             #ECG-REPORTINGBOT
                             elif "ECG" in first_page_text:
-                                patient_id = str(first_page_text).split('Patient ID:')[1].split('Age:')[0].strip()
-                                patient_name = str(first_page_text).split("Name:")[1].split("Patient ID:")[0].strip()
-                                age = str(first_page_text).split("Age:")[1].split('Gender:')[0].strip()
-                                gender = str(first_page_text).split("Gender:")[1].split("Test date:")[0].strip()
-                                test_date = str(first_page_text).split("Test date:")[1].split('Report date:')[0].strip()
-                                report_date = str(first_page_text).split("Report date:")[1].split('ECG')[0].strip()
-                                heart_rate = str(first_page_text).split("Heart rate is")[1].split("BPM.")[0].strip()
-                                findings = str(first_page_text).split("2.")[1].split('.')[0].strip()
-                                patient_data_ecg1.append((patient_id, patient_name, age, gender, test_date, report_date, heart_rate, remove_illegal_characters(findings)))
-                                total_ecg_files1 += 1
+                                try:
+                                    patient_id = str(first_page_text).split('Patient ID:')[1].split('Age:')[0].strip()
+                                    patient_name = str(first_page_text).split("Name:")[1].split("Patient ID:")[0].strip()
+                                    age = str(first_page_text).split("Age:")[1].split('Gender:')[0].strip()
+                                    gender = str(first_page_text).split("Gender:")[1].split("Test Date:")[0].strip()
+                                    test_date = str(first_page_text).split("Test Date:")[1].split('Report Date:')[0].strip()
+                                    report_date = str(first_page_text).split("Report Date:")[1].split('ECG')[0].strip()
+
+                                    # Extract heart rate using regex
+                                    heart_rate = ""
+                                    import re
+                                    hr_match = re.search(r"Heart rate is\s*(\d+)\s*BPM", first_page_text, re.IGNORECASE)
+                                    if hr_match:
+                                        heart_rate = hr_match.group(1).strip()
+
+                                    # Extract observations (line after heart rate)
+                                    findings = ""
+                                    observation_lines = first_page_text.split("Observation:")[1].strip().splitlines()
+                                    cleaned_lines = [line.strip() for line in observation_lines if line.strip()]
+                                    # Exclude the heart rate line and take the rest
+                                    findings_lines = [line for line in cleaned_lines if "heart rate" not in line.lower()]
+                                    if findings_lines:
+                                        findings = findings_lines[0]  # First actual observation
+
+                                    print(patient_id, patient_name, age, gender, test_date, report_date, heart_rate, findings)
+                                    patient_data_ecg1.append((
+                                        patient_id,
+                                        patient_name,
+                                        age,
+                                        gender,
+                                        test_date,
+                                        report_date,
+                                        heart_rate,
+                                        remove_illegal_characters(findings)
+                                    ))
+                                    total_ecg_files1 += 1
+                                except Exception as e:
+                                    print(f"❌ ECG Extraction Error for {pdf_file.name}: {e}")
+                                    error_count += 1
+                                    error_file_path = error_dir / pdf_file.name
+                                    shutil.copy2(pdf_file, error_file_path)
+
 
                             # If it is a Optometry report.
                             elif "OPTOMETRY" in first_page_text:
-                                patient_data_opto = extract_data_from_bot_opto_file(first_page_text)
-                                # If extract_data_from_bot_opto_file returns a dictionary, you may want to ensure it gets converted into a tuple or list for appending
-                                if isinstance(patient_data_opto, dict):  # If it's a dictionary, convert it into a tuple or list
-                                    data = tuple(patient_data_opto.values())
-                                    print(f"Data after making it a tuple : {data}")
+                                # patient_data_opto = extract_data_from_bot_opto_file(first_page_text)
+                                # # If extract_data_from_bot_opto_file returns a dictionary, you may want to ensure it gets converted into a tuple or list for appending
+                                # if isinstance(patient_data_opto, dict):  # If it's a dictionary, convert it into a tuple or list
+                                #     data = tuple(patient_data_opto.values())
+                                #     print(f"Data after making it a tuple : {data}")
+                                # else:
+                                #     data = patient_data_opto
+                                # # patient_data_opto.append((patient_id, patient_name, age, gender, test_date, report_date, heart_rate, remove_illegal_characters(findings)))
+                                # total_opto_files += 1
+                                data = extract_data_from_bot_opto_file(first_page_text)
+                                if isinstance(data, dict):
+                                    data_tuple = tuple(data.values())
+                                elif isinstance(data, tuple):
+                                    data_tuple = data
                                 else:
-                                    data = patient_data_opto
-                                # patient_data_opto.append((patient_id, patient_name, age, gender, test_date, report_date, heart_rate, remove_illegal_characters(findings)))
+                                    data_tuple = (data,)
+                                patient_data_opto.append(data_tuple)
                                 total_opto_files += 1
 
                             else:
@@ -1205,32 +1282,39 @@ def generate_excel_for_individual_files():
                 workbook_vitals.save(excel_file_path_vitals)
 
 
+            green_fill = PatternFill(start_color="FF00FF00", end_color="FF00FF00", fill_type="solid")  # Green
+            red_fill = PatternFill(start_color="FFFF0000", end_color="FFFF0000", fill_type="solid")    # Red
+
             if total_xray_files > 0:
                 workbook_xray = openpyxl.Workbook()
                 sheet_xray = workbook_xray.active
+                sheet_xray.title = "X-Ray Reports"
+                sheet_xray.append(['patient_id', 'name', 'age', 'gender', 'test_date', 'report_date', 'findings'])
 
-                sheet_xray['A1'] = 'patient_id'
-                sheet_xray['B1'] = 'name'
-                sheet_xray['C1'] = 'age'
-                sheet_xray['D1'] = 'gender'
-                sheet_xray['E1'] = 'test_date'
-                sheet_xray['F1'] = 'report_date'
-                sheet_xray['G1'] = 'findings'
-
-
-                for row, data in enumerate(patient_data_xray, start=2):
+                for data in patient_data_xray:
                     sheet_xray.append(data)
+
+                # Define the reference phrase in lowercase
+                # Define the reference phrases in lowercase
+                target_phrases = ("No significant abnormality detected.", "No significant abnormality seen.")
 
                 for row in range(2, len(patient_data_xray) + 2):
                     cell = sheet_xray.cell(row=row, column=7)
-                    findings = cell.value
-                    if "No significant abnormality seen"  in findings:
-                        cell.fill = PatternFill(start_color="00FF00", end_color="00FF00", fill_type="solid")  # Green
+                    original_value = str(cell.value).strip() if cell.value else ""
+                    normalized = original_value.strip()
+
+                    # Check if the finding starts with any of the expected phrases
+                    if normalized.startswith(target_phrases):
+                        print(f"🟢 Normal Finding (Row {row - 1}): {original_value}")
+                        cell.fill = green_fill
                     else:
-                        cell.fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")  # Red
+                        if original_value:
+                            print(f"🔴 Abnormal Finding (Row {row - 1}): {original_value}")
+                        cell.fill = red_fill
 
                 excel_file_path_xray = os.path.join(output_dir, "XrayPatientData.xlsx")
                 workbook_xray.save(excel_file_path_xray)
+                print(f"✅ Excel saved at: {excel_file_path_xray}")
 
             message = f"Total {total_ecg_files1} ECG and {total_pft_files} PFT and {total_xray_files} XRAY data and {total_opto_files} Opto and {total_vitals_files} Vitals data and {total_audio_files} Audio and {total_blood_files} Patho data files have been extracted and saved successfully.\n\n"
             message += f"ECG Output File: {excel_file_path_ecg}\n\nPFT Output File: {excel_file_path_pft}\n\nXRAY Output File: {excel_file_path_xray}"
@@ -1426,6 +1510,77 @@ def generate_excel_for_merged_files():
 #             return
 #         # Add your logic for merged files here
 # This function is used to check the data wrt to a particular excel, that if the data is matching correctly or not. -HIMANSHU.
+def normalize_date(date_str):
+    """
+    Normalize dates in multiple formats to YYYY-MM-DD.
+    """
+    if not date_str:
+        return None
+    formats = ["%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d", "%Y/%m/%d",
+               "%d-%m-%y", "%Y.%m.%d", "%d %b %Y", "%d %B %Y"]
+    for fmt in formats:
+        try:
+            return datetime.strptime(date_str.strip(), fmt).strftime("%Y-%m-%d")
+        except:
+            continue
+    return date_str.strip()
+
+# Helper functions for data cleaning and comparison
+def clean_age(age_str):
+    """Clean age field by removing non-digit characters and leading zeros"""
+    if not age_str:
+        return ""
+    
+    # Remove non-digit characters
+    digits = ''.join(filter(str.isdigit, str(age_str)))
+    
+    # Remove leading zeros and return
+    if digits:
+        # Convert to integer to remove leading zeros, then back to string
+        return str(int(digits))
+    return ""
+
+def clean_gender(gender_str):
+    """Clean gender field by standardizing format"""
+    if not gender_str:
+        return ""
+    gender_str = str(gender_str).strip().lower()
+    if gender_str in ['m', 'male']:
+        return 'male'
+    elif gender_str in ['f', 'female']:
+        return 'female'
+    return gender_str
+
+def clean_name(name_str):
+    """Clean name field by removing extra spaces, converting to lowercase, and removing common prefixes"""
+    if not name_str:
+        return ""
+    
+    # Convert to lowercase and remove extra spaces
+    name_str = ' '.join(str(name_str).strip().lower().split())
+    
+    # Remove common prefixes
+    prefixes = ['mr', 'mrs', 'miss', 'dr', 'md', 'prof']
+    name_parts = name_str.split()
+    if name_parts and name_parts[0] in prefixes:
+        name_str = ' '.join(name_parts[1:])
+    
+    return name_str
+
+def clean_id(id_str):
+    """Clean ID field by converting to lowercase and stripping"""
+    if not id_str:
+        return ""
+    return str(id_str).strip().lower()
+
+def compare_fields(pdf_value, excel_value, field_name, problem_list, modality):
+    """Compare two fields and add to problem list if they don't match"""
+    if pdf_value != excel_value:
+        problem_list.append(f"{modality}: {field_name} mismatch (PDF: '{pdf_value}' vs Excel: '{excel_value}')")
+        return False
+    return True
+
+# This function is used to check the data wrt to a particular excel, that if the data is matching correctly or not. -HIMANSHU.
 def check_pdf_files():
     # Asking for the I/P Directory ( files that need to be checked with the excel.)
     pdf_folder_path = filedialog.askdirectory(title="Select Merged PDF Folder", mustexist=True)
@@ -1466,19 +1621,14 @@ def check_pdf_files():
         # Initialize modality matching list outside the PDF page loop
         modality_match_list = []
         problem_list = []
+        
         if not pdf_files:
             # No matching PDF file found for patient ID
             problem_list.append("Pdf file is missing")
             modality_match_list = ["No"] * 7
 
-            # Fixing the age coming as float here. - Himanshu (21 Nov 24)
-            age_value = str(excel_row.get("age", "")).strip()
-            if age_value:
-                try:
-                    # Converting age to integer to remove any decimal places (e.g., 25.0 -> 25)
-                    age_value = str(int(float(age_value)))
-                except ValueError:
-                    pass  # If it's not a valid number, leaving it, as it is.
+            # Use clean_age function to handle age normalization
+            age_value = clean_age(str(excel_row.get("age", "")))
 
             # Write the results to the worksheet
             row_data = [
@@ -1510,333 +1660,427 @@ def check_pdf_files():
             pdf_file = pdf_files[0]
             pdf_path = os.path.join(pdf_folder_path, pdf_file)
 
-            # Fixing the age coming as float here. - Himanshu (21 Nov 24)
-            age_value = str(excel_row.get("age", "")).strip()
-            if age_value:
-                try:
-                    # Converting age to integer to remove any decimal places (e.g., 25.0 -> 25)
-                    age_value = str(int(float(age_value)))
-                except ValueError:
-                    pass  # If it's not a valid number, leaving it, as it is.
+            # Use clean_age function to handle age normalization
+            age_value = clean_age(str(excel_row.get("age", "")))
 
             # Extract patient data from the Excel row
             patient_data_excel = {
-                "patient_id": str(excel_row["patient_id"]).lower().strip(),
-                "patient_name": str(excel_row["patient_name"]).lower().strip(),
-                "age": age_value,
-                "gender": str(excel_row["gender"]).strip().lower(),
-                "date": str(excel_row["date"]).split(" ")[0]
+                "patient_id": clean_id(excel_row["patient_id"]),
+                "patient_name": clean_name(excel_row["patient_name"]),
+                "age": age_value,  # Already cleaned with clean_age
+                "gender": clean_gender(excel_row["gender"]),
+                "date": normalize_date(str(excel_row["date"]).split(" ")[0])
             }
             print(patient_data_excel)
 
+            pdf_reader = None  # Initialize PDF reader variable
+            
             # Main Logic for comparison.
             try:
-                for modality in ["ECG_GRAPH/ECG_REPORT", "XRAY_REPORT", "XRAY_IMAGE", "PFT", "AUDIOMETRY","OPTOMETRY", "VITALS"]:
-                    modality_match = False
-                    patient_id = None
-                    patient_name = None
-                    age = None
-                    gender = None
-                    report_date = None
-                    # Open the PDF file for the current row
+                # Open the PDF file once for all modalities
+                try:
+                    pdf_reader = PdfReader(open(pdf_path, "rb"))
+                except Exception as e:
+                    print(f"Error opening PDF file {pdf_file}: {str(e)}")
+                    problem_list.append("Error opening PDF file")
+                    modality_match_list = ["No"] * 7
+                    # Write error row data
+                    row_data = [
+                        patient_data_excel["patient_id"],
+                        patient_data_excel["patient_name"],
+                        patient_data_excel["age"],
+                        patient_data_excel["gender"],
+                        patient_data_excel["date"]
+                    ] + modality_match_list + [', '.join(problem_list)]
+                    ws.append(row_data)
+                    continue
+
+                # Initialize modality matching for each modality
+                modality_matches = {
+                    "ECG_GRAPH/ECG_REPORT": False,
+                    "XRAY_REPORT": False,
+                    "XRAY_IMAGE": False,
+                    "PFT": False,
+                    "AUDIOMETRY": False,
+                    "OPTOMETRY": False,
+                    "VITALS": False
+                }
+
+                # Extract all text from PDF for better pattern matching
+                full_text = ""
+                for page_num in range(len(pdf_reader.pages)):
+                    page = pdf_reader.pages[page_num]
+                    full_text += page.extract_text() + "\n"
+
+                # Check for ECG - improved detection
+                if "ECG" in full_text or "electrocardiogram" in full_text.lower():
                     try:
-                        pdf_reader = PdfReader(open(pdf_path, "rb"))
+                        # Try to extract ECG data using multiple patterns
+                        ecg_patterns = [
+                            r"Patient ID:\s*([^\n]+)\s*Patient Name:\s*([^\n]+)\s*Age:\s*([^\n]+)\s*Gender:\s*([^\n]+)\s*Test Date:\s*([^\n]+)\s*Report Date:\s*([^\n]+)",
+                            r"Patient ID:\s*([^\n]+)\s*Patient Name:\s*([^\n]+)\s*Age:\s*([^\n]+)\s*Gender:\s*([^\n]+)\s*Report Date:\s*([^\n]+)",
+                            r"Name:\s*([^\n]+)\s*Patient ID:\s*([^\n]+)\s*Age:\s*([^\n]+)\s*Gender:\s*([^\n]+)\s*Report date:\s*([^\n]+)"
+                        ]
+                        
+                        for pattern in ecg_patterns:
+                            match = re.search(pattern, full_text, re.IGNORECASE)
+                            if match:
+                                groups = match.groups()
+                                if len(groups) >= 5:
+                                    if len(groups) == 6:
+                                        patient_id = clean_id(groups[0])
+                                        patient_name = clean_name(groups[1])
+                                        age = clean_age(groups[2])
+                                        gender = clean_gender(groups[3])
+                                        report_date = normalize_date(groups[5])  # Use Report Date
+                                    else:
+                                        patient_id = clean_id(groups[0])
+                                        patient_name = clean_name(groups[1])
+                                        age = clean_age(groups[2])
+                                        gender = clean_gender(groups[3])
+                                        report_date = normalize_date(groups[4])
+                                    
+                                    print("ECG details found:", patient_id, patient_name, age, gender, report_date)
+                                    
+                                    # Compare with Excel data
+                                    excel_date = patient_data_excel["date"]
+                                    pdf_date = normalize_date(report_date)
+                                    
+                                    # Compare with Excel data and track mismatches
+                                    all_match = True
+                                    all_match &= compare_fields(patient_id, patient_data_excel["patient_id"], "Patient ID", problem_list, "ECG")
+                                    all_match &= compare_fields(patient_name, patient_data_excel["patient_name"], "Patient Name", problem_list, "ECG")
+                                    all_match &= compare_fields(age, patient_data_excel["age"], "Age", problem_list, "ECG")
+                                    all_match &= compare_fields(gender, patient_data_excel["gender"], "Gender", problem_list, "ECG")
+                                    all_match &= compare_fields(pdf_date, excel_date, "Date", problem_list, "ECG")
+                                    
+                                    if all_match:
+                                        modality_matches["ECG_GRAPH/ECG_REPORT"] = True
+                                        break
+                                break
                     except Exception as e:
-                        print(f"Error processing PDF file {pdf_file}: {str(e)}")
-                        error_folder_path = os.path.join(output_directory, "error")
-                        os.makedirs(error_folder_path, exist_ok=True)
-                        shutil.move(pdf_path, os.path.join(error_folder_path, pdf_file))
-                        continue
-                    # Iterate through the PDF pages
-                    for page_num in range(len(pdf_reader.pages)):
-                        page = pdf_reader.pages[page_num]
-                        page_text = page.extract_text()
+                        print(f"Error processing ECG: {str(e)}")
+                        problem_list.append(f"ECG: Error processing - {str(e)}")
 
-                        missing_modalities = []
-                        print("this is the start of page text.")
-                        print("Page no. ", page_num)
-                        print(page_text)
-                        print("This is the end of page text.")
+                # Check for Audiometry - improved detection
+                if "audiometry" in full_text.lower() or "left ear" in full_text.lower() or "right ear" in full_text.lower():
+                    try:
+                        # Try to extract Audiometry data using multiple patterns
+                        audio_patterns = [
+                            r"Patient ID:\s*([^\n]+)\s*Patient Name:\s*([^\n]+)\s*Age:\s*([^\n]+)\s*Gender:\s*([^\n]+)\s*Test Date:\s*([^\n]+)\s*Report Date:\s*([^\n]+)",
+                            r"Patient ID:\s*([^\n]+)\s*Patient Name:\s*([^\n]+)\s*Age:\s*([^\n]+)\s*Gender:\s*([^\n]+)\s*Report Date:\s*([^\n]+)",
+                            r"Name:\s*([^\n]+)\s*Patient ID:\s*([^\n]+)\s*Age:\s*([^\n]+)\s*Gender:\s*([^\n]+)\s*Report date:\s*([^\n]+)"
+                        ]
+                        
+                        for pattern in audio_patterns:
+                            match = re.search(pattern, full_text, re.IGNORECASE)
+                            if match:
+                                groups = match.groups()
+                                if len(groups) >= 5:
+                                    if len(groups) == 6:
+                                        patient_id = clean_id(groups[0])
+                                        patient_name = clean_name(groups[1])
+                                        age = clean_age(groups[2])
+                                        gender = clean_gender(groups[3])
+                                        report_date = normalize_date(groups[5])  # Use Report Date
+                                    else:
+                                        patient_id = clean_id(groups[0])
+                                        patient_name = clean_name(groups[1])
+                                        age = clean_age(groups[2])
+                                        gender = clean_gender(groups[3])
+                                        report_date = normalize_date(groups[4])
+                                    
+                                    print("Audiometry details found:", patient_id, patient_name, age, gender, report_date)
+                                    
+                                    # Compare with Excel data
+                                    excel_date = patient_data_excel["date"]
+                                    pdf_date = normalize_date(report_date)
+                                    
+                                    # Compare with Excel data and track mismatches
+                                    all_match = True
+                                    all_match &= compare_fields(patient_id, patient_data_excel["patient_id"], "Patient ID", problem_list, "AUDIOMETRY")
+                                    all_match &= compare_fields(patient_name, patient_data_excel["patient_name"], "Patient Name", problem_list, "AUDIOMETRY")
+                                    all_match &= compare_fields(age, patient_data_excel["age"], "Age", problem_list, "AUDIOMETRY")
+                                    all_match &= compare_fields(gender, patient_data_excel["gender"], "Gender", problem_list, "AUDIOMETRY")
+                                    all_match &= compare_fields(pdf_date, excel_date, "Date", problem_list, "AUDIOMETRY")
+                                    
+                                    if all_match:
+                                        modality_matches["AUDIOMETRY"] = True
+                                        break
+                                break
+                    except Exception as e:
+                        print(f"Error processing AUDIOMETRY: {str(e)}")
+                        problem_list.append(f"AUDIOMETRY: Error processing - {str(e)}")
 
-                        # Checking the ECG details.
-                        print("Checking if ecg is there or not.")
-                        try:
-                            print("Inside the try block of ecg.")
-                            if modality == "ECG_GRAPH/ECG_REPORT" and "ECG" in page_text:
-                                print("confirmed that it is a ecg file.")
-                                patient_name = str(page_text).split("Name:")[1].split("Patient ID:")[0].strip().lower()
-                                # if patient_name.count(" ") == 1:
-                                #     patient_name = patient_name.strip().lower()
-                                # else:
-                                #     patient_name = patient_name.split(" ")[1].lower().strip()
+                # Process other modalities as before
+                for page_num in range(len(pdf_reader.pages)):
+                    page = pdf_reader.pages[page_num]
+                    page_text = page.extract_text()
 
-                                patient_id = str(page_text).split("Patient ID:")[1].split("Age")[0].strip().lower()
-                                age = str(page_text).split("Age:")[1].split("Gender")[0].strip()
-                                gender = str(page_text).split("Gender:")[1].split("Test")[0].strip().lower()
-                                report_date = str(page_text).split("Report date:")[1].split("ECG")[0].strip().lower()
-                                print("Printing the details of ECG :")
-                                print("Patient Id", patient_id)
-                                print("Patient Name", patient_name)
-                                print("Age", age)
-                                print("Gender", gender)
-                                print("Report Date", report_date)
+                    print("this is the start of page text.")
+                    print("Page no. ", page_num)
+                    print(page_text)
+                    print("This is the end of page text.")
 
-
-                                print("ECG REPORT/ECG GRAPH", patient_id, patient_name, age, gender, report_date)
-
-                                # Compare with Excel data
-                                if (patient_id == patient_data_excel["patient_id"] and
-                                        patient_name == patient_data_excel["patient_name"] and
-                                        age == patient_data_excel["age"] and
-                                        gender == patient_data_excel["gender"] and
-                                        report_date == patient_data_excel["date"]):
-                                    modality_match = True
-                                    break
-                                 
-
-                        except IndexError as ie:
-                            print(f"IndexError: {str(ie)}. Skipping page processing.")
-                            continue
-
-                        # Checking if X-RAY file is present (for stradus.)
-                        # print("Now checking the details of xray files if present.")
-                        # try:
-                        #     print("Inside the try block of xray.")
-                        #     if modality == "XRAY_REPORT" and "Study Date" and "Report Date" in page_text:
-                        #         print("It is confirmed that it is a xray file.")
-                        #         patient_id = str(page_text).split("Patient ID")[1].split(" ")[1].lower().strip()
-                        #         patient = str(page_text).split("Name")[1].split("Date")[0].split(" ")[0].strip().lower()
-                        #         if "patient" in patient:
-                        #             patient_name = patient.split("patient")[0].strip()
-                        #         else:
-                        #             patient_name = patient
-                        #         age = str(page_text).split("Age")[1].split("Yr")[0].strip()
-                        #         gender = str(page_text).split("Sex")[1].split("Study Date")[0].strip().lower()
-                        #         date = str(page_text).split("Study Date")[1].split("\n")[1].split("Time")[1].strip()
-                        #         input_date = datetime.strptime(date, "%d %b %Y")
-                        #         report_date = input_date.strftime("%Y-%m-%d")
-
-                        #         print("These are the extracted data of the xray.")
-                        #         print('XRAY', patient_id, patient_name, age, report_date)
-                        #         print("This is the date extracted :", date)
-                        #         print("This is the i/p date :", input_date)
-
-                        #         # Compare with Excel data
-                        #         if (patient_id == patient_data_excel["patient_id"] and
-                        #                 patient_name == patient_data_excel["patient_name"] and
-                        #                 age == patient_data_excel["age"] and
-                        #                 gender == patient_data_excel["gender"] and
-                        #                 report_date == patient_data_excel["date"]):
-                        #             modality_match = True
-                        #             break
-                                 
-                        # except IndexError as ie:
-                        #     print(f"IndexError: {str(ie)}. Skipping page processing.")
-                        #     continue
-
-                        # try:
-                        #     if modality == "XRAY_IMAGE" and "Page 2 of 2" in page_text:
-                        #         if "Page 2 of 2" in page_text:
-                        #             modality_match = True
-                        #             break
-                        # except IndexError as ie:
-                        #     print(f"IndexError: {str(ie)}. Skipping page processing.")
-                        #     continue
-
-                        # checking for pft.
-                        try:
-                            print("inside the try block of pft.")
-                            if modality == "PFT" and "RECORDERS & MEDICARE SYSTEMS" in page_text:
-                                print("it confirms that it is a pft file.")
-                                patient_name = str(page_text).split("Patient: ")[1].split("Refd.By:")[0].split("\n")[0].lower()
-                                # Naming Issue required by team, making sure that there will be no space in the name.- Himanshu.
-                                if " " in patient_name:
-                                    patient_name = patient_name.split(" ")[0]
-                                else:
-                                    patient_name = patient_name
-                                patient_id = str(page_text).split("ID     :")[1].split("Age")[0].strip().lower()
-                                age = str(page_text).split("Age    :")[1].split("Yrs")[0].strip()
-                                if "Smoker" in page_text:
-                                    gender = str(page_text).split("Gender   :")[1].split("Smoker")[0].strip().lower()
-                                else:
-                                    gender = str(page_text).split("Gender   :")[1].split("Eth. Corr:")[0].strip().lower()
-                                date = str(page_text).split("Date   :")[1][1:13].strip().lower()
-                                if len(date) == 10:
-                                    input = date
-                                else:
+                    # checking for pft.
+                    try:
+                        print("inside the try block of pft.")
+                        if not modality_matches["PFT"] and "RECORDERS & MEDICARE SYSTEMS" in page_text:
+                            print("it confirms that it is a pft file.")
+                            patient_name = clean_name(str(page_text).split("Patient: ")[1].split("Refd.By:")[0].split("\n")[0])
+                            # Naming Issue required by team, making sure that there will be no space in the name.- Himanshu.
+                            if " " in patient_name:
+                                patient_name = patient_name.split(" ")[0]
+                            patient_id = clean_id(str(page_text).split("ID     :")[1].split("Age")[0])
+                            age = clean_age(str(page_text).split("Age    :")[1].split("Yrs")[0])
+                            if "Smoker" in page_text:
+                                gender = clean_gender(str(page_text).split("Gender   :")[1].split("Smoker")[0])
+                            else:
+                                gender = clean_gender(str(page_text).split("Gender   :")[1].split("Eth. Corr:")[0])
+                            date = str(page_text).split("Date   :")[1][1:13].strip().lower()
+                            if len(date) == 10:
+                                report_date = date
+                            else:
+                                try:
                                     input_date = datetime.strptime(date, "%d-%b-%Y")
+                                    report_date = input_date.strftime("%Y-%m-%d")
+                                except:
+                                    report_date = date
 
-                                report_date = input_date.strftime("%Y-%m-%d")
+                            print('PFT', patient_id, patient_name, age, gender, report_date)
 
-                                print('PFT', patient_id, patient_name, age, gender, report_date)
+                            # Normalize dates before comparison
+                            excel_date = patient_data_excel["date"]
+                            pdf_date = normalize_date(report_date)
 
-                                # Compare with Excel data
-                                if (patient_id == patient_data_excel["patient_id"] and
-                                        patient_name == patient_data_excel["patient_name"] and
-                                        age == patient_data_excel["age"] and
-                                        gender == patient_data_excel["gender"] and
-                                        report_date == patient_data_excel["date"]):
-                                    modality_match = True
+                            # Compare with Excel data and track mismatches
+                            all_match = True
+                            all_match &= compare_fields(patient_id, patient_data_excel["patient_id"], "Patient ID", problem_list, "PFT")
+                            all_match &= compare_fields(patient_name, patient_data_excel["patient_name"], "Patient Name", problem_list, "PFT")
+                            all_match &= compare_fields(age, patient_data_excel["age"], "Age", problem_list, "PFT")
+                            all_match &= compare_fields(gender, patient_data_excel["gender"], "Gender", problem_list, "PFT")
+                            all_match &= compare_fields(pdf_date, excel_date, "Date", problem_list, "PFT")
+                            
+                            if all_match:
+                                modality_matches["PFT"] = True
+                                    
+                    except IndexError as ie:
+                        print(f"IndexError: {str(ie)}. Skipping page processing.")
+                        continue
+                    except Exception as e:
+                        print(f"Error processing PFT: {str(e)}")
+                        continue
+
+                    # Checking for opto.
+                    try:
+                        print("Inside the try block of optometry.")
+                        if not modality_matches["OPTOMETRY"] and "OPTOMETRY REPORT" in page_text:
+                            print("This is confirmed that this is a opto file.")
+                            patient_name = clean_name(str(page_text).split("Name:")[1].split("Age:")[0])
+                            patient_id = clean_id(str(page_text).split("Patient ID:")[1].split("Patient Name:")[0])
+                            age = clean_age(str(page_text).split("Age:")[1].split("Gender")[0])
+                            gender = clean_gender(str(page_text).split("Gender:")[1].split("Test")[0])
+                            report_date = normalize_date(str(page_text).split("Report Date:")[1].split("OPTOMETRY")[0])
+
+                            print("These are the opto patient details :")
+                            print("Patient Id", patient_id)
+                            print("Patient Name", patient_name)
+                            print("Age", age)
+                            print("Gender", gender)
+                            print("Report Date", report_date)
+                            
+                            print('OPTOMETRY', patient_id, patient_name, age, gender, report_date)
+                            # Normalize dates before comparison
+                            excel_date = patient_data_excel["date"]
+                            pdf_date = normalize_date(report_date)
+                            
+                            # Compare with Excel data and track mismatches
+                            all_match = True
+                            all_match &= compare_fields(patient_id, patient_data_excel["patient_id"], "Patient ID", problem_list, "OPTOMETRY")
+                            all_match &= compare_fields(patient_name, patient_data_excel["patient_name"], "Patient Name", problem_list, "OPTOMETRY")
+                            all_match &= compare_fields(age, patient_data_excel["age"], "Age", problem_list, "OPTOMETRY")
+                            all_match &= compare_fields(gender, patient_data_excel["gender"], "Gender", problem_list, "OPTOMETRY")
+                            all_match &= compare_fields(pdf_date, excel_date, "Date", problem_list, "OPTOMETRY")
+                            
+                            if all_match:
+                                modality_matches["OPTOMETRY"] = True
+
+                    except IndexError as ie:
+                        print(f"IndexError: {str(ie)}. Skipping page processing.")
+                        continue
+                    except Exception as e:
+                        print(f"Error processing OPTOMETRY: {str(e)}")
+                        continue
+
+                    # Checking for vitals.
+                    try:
+                        print("inside the try block of vitals.")
+                        if not modality_matches["VITALS"] and "VITAL" in page_text:
+                            print("it confirms that it is a vitals file.")
+                            patient_id = clean_id(str(page_text).split("Patient ID:")[1].split("Patient Name:")[0])
+                            patient_name = clean_name(str(page_text).split("Patient Name:")[1].split("Age")[0])
+                            age = clean_age(str(page_text).split("Age:")[1].split("Gender")[0])
+                            gender = clean_gender(str(page_text).split("Gender:")[1].split("Test")[0])
+                            report_date = normalize_date(str(page_text).split("Report Date:")[1].split("VITALS")[0])
+                            print('VITALS', patient_id, patient_name, age, gender, report_date)
+                            # Normalize dates
+                            excel_date = patient_data_excel["date"]
+                            pdf_date = normalize_date(report_date)
+                            
+                            # Compare with Excel data and track mismatches
+                            all_match = True
+                            all_match &= compare_fields(patient_id, patient_data_excel["patient_id"], "Patient ID", problem_list, "VITALS")
+                            all_match &= compare_fields(patient_name, patient_data_excel["patient_name"], "Patient Name", problem_list, "VITALS")
+                            all_match &= compare_fields(age, patient_data_excel["age"], "Age", problem_list, "VITALS")
+                            all_match &= compare_fields(gender, patient_data_excel["gender"], "Gender", problem_list, "VITALS")
+                            all_match &= compare_fields(pdf_date, excel_date, "Date", problem_list, "VITALS")
+                            
+                            if all_match:
+                                modality_matches["VITALS"] = True
+                    except IndexError as ie:
+                        print(f"IndexError: {str(ie)}. Skipping page processing.")
+                        continue
+                    except Exception as e:
+                        print(f"Error processing VITALS: {str(e)}")
+                        continue
+
+                    # Checking for X-Ray (Reporting Bot.)
+                    # Checking for X-Ray (Reporting Bot.)
+                    try:
+                        print("Inside the try block of XRAY.")
+                        if not modality_matches["XRAY_REPORT"] and "X-RAY" in page_text:
+                            print("Confirmed X-Ray file.")
+                            
+                            # Extract Patient Fields with more flexible parsing
+                            patient_id = None
+                            patient_name = None
+                            age = None
+                            gender = None
+                            test_date = None
+                            report_date = None
+                            
+                            # Try multiple patterns to extract patient information
+                            patterns = [
+                                r"Patient Name:\s*([^\n]+)\s*Patient ID:\s*([^\n]+)\s*Patient Age:\s*([^\n]+)\s*Patient Gender:\s*([^\n]+)\s*Test Date:\s*([^\n]+)\s*Report Date:\s*([^\n]+)",
+                                r"Patient Name:\s*([^\n]+)\s*Patient ID:\s*([^\n]+)\s*Patient Age:\s*([^\n]+)\s*Patient Gender:\s*([^\n]+)",
+                                r"Patient ID:\s*([^\n]+)\s*Patient Name:\s*([^\n]+)\s*Patient Age:\s*([^\n]+)\s*Patient Gender:\s*([^\n]+)"
+                            ]
+                            
+                            for pattern in patterns:
+                                match = re.search(pattern, page_text, re.IGNORECASE)
+                                if match:
+                                    groups = match.groups()
+                                    if len(groups) >= 4:
+                                        if "Patient Name:" in pattern:
+                                            patient_name = clean_name(groups[0])
+                                            patient_id = clean_id(groups[1])
+                                            age = clean_age(groups[2])
+                                            gender = clean_gender(groups[3])
+                                            if len(groups) >= 6:
+                                                test_date = normalize_date(groups[4])
+                                                report_date = normalize_date(groups[5])
+                                        else:  # Patient ID first pattern
+                                            patient_id = clean_id(groups[0])
+                                            patient_name = clean_name(groups[1])
+                                            age = clean_age(groups[2])
+                                            gender = clean_gender(groups[3])
                                     break
-                                 
+                            
+                            # If regex didn't work, try the original method with more error handling
+                            if not all([patient_id, patient_name, age, gender]):
+                                try:
+                                    patient_id = clean_id(str(page_text).split("Patient ID:")[1].split("Patient Age:")[0].strip())
+                                except:
+                                    pass
+                                try:
+                                    patient_name = clean_name(str(page_text).split("Patient Name:")[1].split("Patient ID:")[0].strip())
+                                except:
+                                    pass
+                                try:
+                                    age = clean_age(str(page_text).split("Patient Age:")[1].split("Patient Gender:")[0].strip().lstrip('0'))
+                                except:
+                                    pass
+                                try:
+                                    gender = clean_gender(str(page_text).split("Patient Gender:")[1].split("Test Date:")[0].strip())
+                                except:
+                                    pass
+                                try:
+                                    test_date = normalize_date(str(page_text).split("Test Date:")[1].split("Report Date:")[0].strip())
+                                except:
+                                    pass
+                                try:
+                                    report_date = normalize_date(str(page_text).split("Report Date:")[1].split("Referral Dr:")[0].strip())
+                                except:
+                                    pass
 
-                        except IndexError as ie:
-                            print(f"IndexError: {str(ie)}. Skipping page processing.")
-                            continue
+                            print('XRAY BOT:', patient_id, patient_name, age, gender, report_date or test_date)
 
-                        # checking for audio.
-                        try:
-                            print("inside the try block of audiometry.")
-                            if modality == "AUDIOMETRY" and "left ear" in page_text:
-                                print("it is confirmation that this is a audiometry file.")
-                                data = str(page_text)
-                                patient_name = str(page_text).split("Name")[1].split("Patient ID")[0].strip().lower()
-                                patient_id = str(page_text).split("Patient ID")[1].split("Age")[0].strip().lower()
-                                age = str(page_text).split("Age")[1].split("Gender")[0].strip()
+                            # Normalize dates
+                            excel_date = patient_data_excel["date"]
+                            pdf_date = normalize_date(test_date) if test_date else normalize_date(report_date)
+
+                            # Compare with Excel data
+                            excel_data = patient_data_excel
+                            
+                            # Compare with Excel data and track mismatches
+                            all_match = True
+                            if patient_id:
+                                all_match &= compare_fields(patient_id, excel_data["patient_id"], "Patient ID", problem_list, "XRAY")
+                            else:
+                                problem_list.append("XRAY: Patient ID not found")
                                 
-                                gender = str(page_text).split("Gender")[1].split("Test")[0].strip().lower()
-                                report_date = str(page_text).split('Report date')[1].strip().lower()
-
-                                print('AUDIOMETRY', patient_id, patient_name, age, gender, report_date)
-
-                                # Compare with Excel data
-                                if (patient_id == patient_data_excel["patient_id"] and
-                                        patient_name == patient_data_excel["patient_name"] and
-                                        age == patient_data_excel["age"] and
-                                        gender == patient_data_excel["gender"]):
-                                    modality_match = True
-                                    break
-                                 
-
-                        except IndexError as ie:
-                            print(f"IndexError: {str(ie)}. Skipping page processing.")
-                            continue
-
-                        # Checking for opto.
-                        try:
-                            print("Inside the try block of optometry.")
-                            if modality == "OPTOMETRY" and "OPTOMETRY REPORT" in page_text:
-                                print("This is confirmed that this is a opto file.")
-                                patient_name = str(page_text).split("Name:")[1].split("Age:")[0].strip().lower()
-                                patient_id = str(page_text).split("Patient ID:")[1].split("Patient Name:")[0].strip().lower()
-                                age = str(page_text).split("Age:")[1].split("Gender")[0].strip()
-                                gender = str(page_text).split("Gender:")[1].split("Test")[0].strip().lower()
-                                report_date = str(page_text).split("Report Date:")[1].split("OPTOMETRY")[0].strip().lower()
-
-                                print("These are the opto patient details :")
-                                print("Patient Id", patient_id)
-                                print("Patient Name", patient_name)
-                                print("Age", age)
-                                print("Gender", gender)
-                                print("Report Date", report_date)
+                            if patient_name:
+                                all_match &= compare_fields(patient_name, excel_data["patient_name"], "Patient Name", problem_list, "XRAY")
+                            else:
+                                problem_list.append("XRAY: Patient Name not found")
                                 
+                            if age:
+                                all_match &= compare_fields(age, excel_data["age"], "Age", problem_list, "XRAY")
+                            else:
+                                problem_list.append("XRAY: Age not found")
+                                
+                            if gender:
+                                all_match &= compare_fields(gender, excel_data["gender"], "Gender", problem_list, "XRAY")
+                            else:
+                                problem_list.append("XRAY: Gender not found")
+                                
+                            if pdf_date:
+                                all_match &= compare_fields(pdf_date, excel_date, "Date", problem_list, "XRAY")
+                            else:
+                                problem_list.append("XRAY: Date not found")
 
-                                print('OPTOMETRY', patient_id, patient_name, age, gender, report_date)
+                            if all_match:
+                                modality_matches["XRAY_REPORT"] = True
 
-                                # Compare with Excel data
-                                if (patient_id == patient_data_excel["patient_id"] and
-                                        patient_name == patient_data_excel["patient_name"] and
-                                        age == patient_data_excel["age"] and
-                                        gender == patient_data_excel["gender"] and
-                                        report_date == patient_data_excel["date"]):
-                                    modality_match = True
-                                    break
-                                else:
-                                    if (patient_id != patient_data_excel["patient_id"] and
-                                            patient_name != patient_data_excel["patient_name"] and
-                                            age != patient_data_excel["age"] and
-                                            gender != patient_data_excel["gender"] and
-                                            report_date != patient_data_excel["date"]):
-                                        problem_list.append(f' {modality}: All the data are incorrect')
+                    except Exception as e:
+                        print(f"Error processing XRAY: {str(e)}")
+                        import traceback
+                        traceback.print_exc()
+                    # Check for XRAY_IMAGE
+                    try:
+                        if not modality_matches["XRAY_IMAGE"] and "Page 2 of 2" in page_text:
+                            if "Page 2 of 2" in page_text:
+                                modality_matches["XRAY_IMAGE"] = True
+                    except IndexError as ie:
+                        print(f"IndexError: {str(ie)}. Skipping page processing.")
+                        continue
 
-                        except IndexError as ie:
-                            print(f"IndexError: {str(ie)}. Skipping page processing.")
-                            continue
+                # Convert modality matches to list for Excel output
+                modality_match_list = [
+                    "Yes" if modality_matches["ECG_GRAPH/ECG_REPORT"] else "No",
+                    "Yes" if modality_matches["XRAY_REPORT"] else "No", 
+                    "Yes" if modality_matches["XRAY_IMAGE"] else "No",
+                    "Yes" if modality_matches["PFT"] else "No",
+                    "Yes" if modality_matches["AUDIOMETRY"] else "No",
+                    "Yes" if modality_matches["OPTOMETRY"] else "No",
+                    "Yes" if modality_matches["VITALS"] else "No"
+                ]
 
-                        # Checking for vitals.
-                        try:
-                            print("inside the try block of vitals.")
-                            if modality == "VITALS" and "VIT" in page_text:
-                                print("it confirms that it is a vitals file.")
-                                patient_id = str(page_text).split("Patient ID:")[1].split("Patient Name:")[0].strip().lower()
-                                patient_name = str(page_text).split("Patient Name:")[1].split("Age")[0].strip().lower()
-                                age = str(page_text).split("Age:")[1].split("Gender")[0].strip()
-                                gender = str(page_text).split("Gender:")[1].split("Test")[0].strip().lower()
-                                report_date = str(page_text).split("Report Date:")[1].split("VITALS")[0].strip().lower()
-                                print('VITALS', patient_id, patient_name, age, gender, report_date)
-
-                                # Compare with Excel data
-                                if (patient_id == patient_data_excel["patient_id"] and
-                                    patient_name == patient_data_excel["patient_name"] and
-                                    age == patient_data_excel["age"] and
-                                    gender == patient_data_excel["gender"] and
-                                    report_date == patient_data_excel["date"]):
-
-                                    modality_match = True
-                                    break
-                                else:
-                                    if (patient_id != patient_data_excel["patient_id"] and
-                                            patient_name != patient_data_excel["patient_name"] and
-                                            age != patient_data_excel["age"] and
-                                            gender != patient_data_excel["gender"] and
-                                            report_date != patient_data_excel["date"]):
-                                        problem_list.append(f' {modality}: All the data are incorrect')
-                        except IndexError as ie:
-                            print(f"IndexError: {str(ie)}. Skipping page processing.")
-                            continue
-
-                        # Checking for X-Ray (Reporting Bot.)
-                        try:
-                            print("inside the try block of xray.")
-                            if modality == "XRAY_REPORT" and "X-RAY" in page_text:
-                                print("it confirms that it is a xray file.")
-                                patient_id = str(page_text).split("Patient ID:")[1].split("Age:")[0].lower().strip()
-                                patient_name = str(page_text).split("Name:")[1].split("Patient ID:")[0].strip().lower()
-                                age = str(page_text).split("Age:")[1].split("YGender:")[0].strip()
-                                if age.startswith("0"):
-                                    age = age.split("0")[1]
-                                gender = str(page_text).split("Gender:")[1].split("Test date:")[0].strip().lower()
-                                report_date = str(page_text).split("Report date:")[1].split("X-RAY")[0].strip().lower()
-
-                                print('XRAY BOT', patient_id, patient_name, age, gender, report_date)
-
-                                # Compare with Excel data
-                                if (patient_id == patient_data_excel["patient_id"] and
-                                        patient_name == patient_data_excel["patient_name"] and
-                                        age == patient_data_excel["age"] and
-                                        gender == patient_data_excel["gender"] and
-                                        report_date == patient_data_excel["date"]):
-                                    modality_match = True
-                                    break
-                                else:
-                                    if (patient_id != patient_data_excel["patient_id"] and
-                                            patient_name != patient_data_excel["patient_name"] and
-                                            age != patient_data_excel["age"] and
-                                            gender != patient_data_excel["gender"] and
-                                            report_date != patient_data_excel["date"]):
-                                        problem_list.append(f' {modality}: All the data are incorrect')
-                        except IndexError as ie:
-                            print(f"IndexError: {str(ie)}. Skipping page processing.")
-                            continue
-
-                    issues = []
-                    if patient_id == patient_data_excel["patient_id"] or patient_name == patient_data_excel["patient_name"] or age == patient_data_excel["age"] or gender == patient_data_excel["gender"] or report_date == patient_data_excel["date"]:
-                        if not modality_match:
-                            if patient_id != patient_data_excel["patient_id"]:
-                                issues.append("ID")
-                            if patient_name != patient_data_excel["patient_name"]:
-                                issues.append("Name")
-                            if age != patient_data_excel["age"]:
-                                issues.append("Age")
-                            if gender != patient_data_excel["gender"]:
-                                issues.append("Gender")
-                            if report_date != patient_data_excel["date"]:
-                                issues.append("Date")
-
-                    # Append the modality 2 corresponding issues to the problem_list
-                    if issues:
-                        problem_list.append(f"{modality}: {', '.join(issues)}")
-                    modality_match_list.append("Yes" if modality_match else "No")
+                # Generate problem list for mismatches
+                for modality, matched in modality_matches.items():
+                    if not matched and modality != "XRAY_IMAGE":  # XRAY_IMAGE might not have patient data
+                        if not any(modality in problem for problem in problem_list):
+                            problem_list.append(f"{modality}: Not found")
 
                 # Write the results to the worksheet
                 row_data = [
@@ -1845,28 +2089,46 @@ def check_pdf_files():
                     patient_data_excel["age"],
                     patient_data_excel["gender"],
                     patient_data_excel["date"]
-                ] + modality_match_list  + [', '.join(problem_list)]
+                ] + modality_match_list + [', '.join(problem_list)]
                 ws.append(row_data)
 
                 current_row = ws.max_row
 
-                # Define the column indices for "Yes" and "No" values
-                yes_columns = [5, 6, 9, 10, 11, 12]  # Assuming columns F to M are modality columns
-
                 # Apply fill color to cells based on "Yes" or "No"
-                for col_num in range(5, 13):  # Columns E to M
+                for col_num in range(6, 13):  # Columns F to L (modality columns)
                     cell = ws.cell(row=current_row, column=col_num)
                     if cell.value == "Yes":
                         cell.fill = PatternFill(start_color="00FF00", end_color="00FF00",
                                                 fill_type="solid")  # Green color
                     elif cell.value == "No":
-                        cell.fill = PatternFill(start_color="FF0000", end_color="FF0000",fill_type="solid")
+                        cell.fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")  # Red color
 
             except Exception as e:
                 print(f"Error processing PDF file {pdf_file}: {str(e)}")
+                # Close PDF reader if it was opened
+                if pdf_reader and hasattr(pdf_reader, 'stream') and pdf_reader.stream:
+                    try:
+                        pdf_reader.stream.close()
+                    except:
+                        pass
+                
+                # Move file to error folder with proper error handling
                 error_folder_path = os.path.join(output_directory, "error")
                 os.makedirs(error_folder_path, exist_ok=True)
-                shutil.move(pdf_path, os.path.join(error_folder_path, pdf_file))
+                
+                try:
+                    # Try to close any open file handles first
+                    import gc
+                    gc.collect()  # Force garbage collection
+                    
+                    # Use copy instead of move to avoid permission issues
+                    import shutil
+                    error_file_path = os.path.join(error_folder_path, pdf_file)
+                    shutil.copy2(pdf_path, error_file_path)
+                    print(f"Copied {pdf_file} to error folder")
+                except Exception as move_error:
+                    print(f"Could not move file to error folder: {str(move_error)}")
+                    
                 continue
         else:
             print(f"No matching PDF file found for patient ID: {pdf_id_prefix}")
@@ -2477,91 +2739,71 @@ def extract_missing_data_for_modality(modality, page_text, patient_details):
 from openpyxl import Workbook
 from openpyxl.styles import Font
 
+from openpyxl import Workbook
+from openpyxl.styles import Font
+
 def modality_based_excel_workbook(modality):
     print(f"This is the modality :{modality}")
     # Headers for each modality
     headers = {
         'XRAY': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'FINDINGS'],
         'PFT': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'HEIGHT', 'WEIGHT', 'OBSERVATIONS'],
-        'OPTOMETRY': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'FAR VISION RIGHT', 'NEAR VISION RIGHT', 'DISTANCE VISION RIGHT', 'READING RIGHT','SPHERICAL RIGHT', 'CYLINDRICAL RIGHT', 'AXIS RIGHT', 'ADD RIGHT',
-                      'FAR VISION LEFT', 'NEAR VISION LEFT',  'DISTANCE VISION LEFT', 'READING VISION LEFT', 'SPHERICAL LEFT', 'CYLINDRICAL LEFT', 'AXIS LEFT', 'ADD LEFT', 'COLOUR BLINDNESS'],
+        'OPTOMETRY': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE',
+                      'FAR VISION RIGHT', 'NEAR VISION RIGHT', 'DISTANCE VISION RIGHT', 'READING RIGHT','SPHERICAL RIGHT', 
+                      'CYLINDRICAL RIGHT', 'AXIS RIGHT', 'ADD RIGHT',
+                      'FAR VISION LEFT', 'NEAR VISION LEFT', 'DISTANCE VISION LEFT', 'READING VISION LEFT', 
+                      'SPHERICAL LEFT', 'CYLINDRICAL LEFT', 'AXIS LEFT', 'ADD LEFT', 'COLOUR BLINDNESS'],
         'AUDIOMETRY': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'LEFT EAR FINDING', 'RIGHT EAR FINDING'],
         'ECG': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'HEART RATE', 'FINDINGS'],
         'VITALS': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'HEIGHT', 'WEIGHT', 'BLOOD PRESSURE', 'PULSE'],
-        'PATHOLOGY': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 'HAEMOGLOBIN', 'RBC COUNT', 'PCV', 'MCV', 'MCH', 'MCHC', 'RDW (CV)', 'RDW-SD',
-                      'TLC', 'NEUTROPHILS (DLC)', 'LYMPHOCYTES (DLC)', 'MONOCYTES (DLC)', 'EOSINOPHILS (DLC)', 'BASOPHILS (DLC)', 'NEUTROPHILS (ALC)', 'LYMPHOCYTES (ALC)', 'MONOCYTES (ALC)', 
-                      'EOSINOPHILS (ALC)', 'BASOPHILS (ALC)', 'PLATELET COUNT', 'MPV', 'PCT']
+        'PATHOLOGY': ['SERIAL NO.', 'PATIENT ID', 'PATIENT NAME', 'AGE', 'GENDER', 'STUDY DATE', 'REPORT DATE', 
+                      'HAEMOGLOBIN', 'RBC COUNT', 'PCV', 'MCV', 'MCH', 'MCHC', 'RDW (CV)', 'RDW-SD',
+                      'TLC', 'NEUTROPHILS (DLC)', 'LYMPHOCYTES (DLC)', 'MONOCYTES (DLC)', 'EOSINOPHILS (DLC)', 'BASOPHILS (DLC)', 
+                      'NEUTROPHILS (ALC)', 'LYMPHOCYTES (ALC)', 'MONOCYTES (ALC)', 'EOSINOPHILS (ALC)', 'BASOPHILS (ALC)', 
+                      'PLATELET COUNT', 'MPV', 'PCT']
     }
-    # Creating workbook for each type of modality
-    xray_Workbook = Workbook()
-    pft_Workbook = Workbook()
-    opto_Workbook = Workbook()
-    audio_Workbook = Workbook()
-    ecg_Workbook = Workbook()
-    vitals_Workbook = Workbook()
-    patho_Workbook = Workbook()
-    # Mapping modalities to their corresponding excel workbooks.
-    modality_workbook = {
-        'XRAY': xray_Workbook,
-        'PFT': pft_Workbook,
-        'OPTOMETRY': opto_Workbook,
-        'AUDIOMETRY': audio_Workbook,
-        'ECG': ecg_Workbook,
-        'VITALS': vitals_Workbook,
-        'PATHOLOGY': patho_Workbook
-    }
-    # # Initialize workbooks for each modality
-    # modality_workbook = {
-    #     'XRAY': Workbook(),
-    #     'PFT': Workbook(),
-    #     'OPTOMETRY': Workbook(),
-    #     'AUDIOMETRY': Workbook(),
-    #     'ECG': Workbook(),
-    #     'VITALS': Workbook(),
-    #     'PATHOLOGY': Workbook()
-    # }
 
+    # Always create a new workbook for each modality
+    modality_workbook = {
+        'XRAY': Workbook(),
+        'PFT': Workbook(),
+        'OPTOMETRY': Workbook(),
+        'AUDIOMETRY': Workbook(),
+        'ECG': Workbook(),
+        'VITALS': Workbook(),
+        'PATHOLOGY': Workbook()
+    }
 
     modality_patient_data_dictionary = {
-    'XRAY': {header: None for header in headers['XRAY']},
-    'PFT': {header: None for header in headers['PFT']},
-    'OPTOMETRY': {header: None for header in headers['OPTOMETRY']},
-    'AUDIOMETRY': {header: None for header in headers['AUDIOMETRY']},
-    'ECG': {header: None for header in headers['ECG']},
-    'VITALS': {header: None for header in headers['VITALS']},
-    'PATHOLOGY': {header: None for header in headers['PATHOLOGY']}
+        key: {header: None for header in headers[key]} for key in headers
     }
 
-    # Get the workbook and headers based on the modality
+    # Get the workbook for the requested modality
     wb = modality_workbook.get(modality)
     if wb is None:
         print(f"Error: Workbook for modality '{modality}' not found!")
         return None, None, None
-    # ws = wb.active
+
+    ws = wb.active  # get first worksheet
     modality_headers = headers.get(modality)
     respective_patient_data = modality_patient_data_dictionary.get(modality)
-    if wb and modality_headers:
-        # ws = wb.active
 
-        # Checking if the first row is empty (indicating no headers or data)
-        if not any(cell.value for cell in wb[1]):  # Checking if the first row has any values
-            # Adding headers to the first row
+    if wb and modality_headers:
+        # ✅ Corrected line
+        if not any(cell.value for cell in ws[1]):  
+            # Add headers
             for col_num, header in enumerate(modality_headers, 1):
-                cell = wb.cell(row=1, column=col_num)
+                cell = ws.cell(row=1, column=col_num)
                 cell.value = header
                 cell.font = Font(bold=True)
-
-            # Set the serial number to 1 (this can be updated as data is added)
             serial_no = 1
         else:
-            # If it is already created than simply update the serial no.
-            serial_no = wb.max_row + 1
+            serial_no = ws.max_row + 1
 
-        # Returning the active workbook and the serial number
         return wb, serial_no, respective_patient_data
     else:
-        # If modality is invalid, returning None
         return None, None, None
+
 
 
 # This function i've created to check or get the data based on conditions.
@@ -2809,39 +3051,35 @@ def extract_data_from_the_u4rad_pacs_xray_file(pageText):
         patient_info['test_date'] = str(pageText).split('Test Date:')[1].split('Report Date:')[0].strip()
         patient_info['report_date'] = str(pageText).split('Report Date:')[1].split('Dr.')[0].split('\n')[0].strip()
         
-        # I will extract other data from here afterwards.
-        # I know that the doctors will make this mistake so i'm fixing it here (maximum cases). - Himanshu.
-        if 'IMPRESSION:' in pageText:
-            findings_data = str(pageText).split('IMPRESSION:')[1].split("Dr.")[0]
-            if "•" in findings_data:
-                findings = findings_data.split("•")[1].split(".")[0].strip()
-            else:
-                findings = findings_data.strip()
-        elif 'IMPRESSIONS:' in pageText:
-            findings_data = str(pageText).split('IMPRESSIONS:')[1].split("Dr.")[0]
-            if "•" in findings_data:
-                findings = findings_data.split("•")[1].split(".")[0].strip()
-            else:
-                findings = findings_data.strip()
-        elif 'IMPRESSION;' in pageText:
-            findings_data = str(pageText).split('IMPRESSION;')[1].split("Dr.")[0]
-            if "•" in findings_data:
-                findings = findings_data.split("•")[1].split(".")[0].strip()
-            else:
-                findings = findings_data.strip()
-        elif 'IMPRESSIONS;' in pageText:
-            findings_data = str(pageText).split('IMPRESSIONS;')[1].split("Dr.")[0]
-            if "•" in findings_data:
-                findings = findings_data.split("•")[1].split(".")[0].strip()
-            else:
-                findings = findings_data.strip()
-        else:
-            findings = None
-        # Now adding the findings in the sheet.
+        # Extract findings based on known formats
+        findings = None
+        for key in ['IMPRESSION:', 'IMPRESSIONS:', 'IMPRESSION;', 'IMPRESSIONS;', 'IMPRESSION :-', 'ADVICE :-']:
+            if key in pageText:
+                findings_data = pageText.split(key)[1].split("Dr.")[0]
+                if "•" in findings_data:
+                    findings = findings_data.split("•")[1].split(".")[0].strip()
+                else:
+                    findings = findings_data.strip()
+                break
+
+        # Default to standard phrase if findings is None or empty
+        if not findings or not findings.strip():
+            findings = " No significant abnormality detected."  # Ensure period
+
+        # Sanitize and ensure period consistency
+        findings = findings.strip()
+        if not findings.endswith('.'):
+            findings += '.'
         patient_info['findings'] = remove_illegal_characters(findings)
+
+        # Sanitize findings and add to patient info
+        patient_info['findings'] = remove_illegal_characters(findings.strip())
+
     except IndexError:
         print("Error extracting X-ray data.")
+    
     return patient_info
+
 
 # Function for extracting data from Blood reports
 def extract_data_from_the_redcliffe_patho_file(pageText):
